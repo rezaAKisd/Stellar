@@ -17,6 +17,7 @@ from PySide6.QtGui import QIcon, QDragEnterEvent, QDropEvent, QPixmap, QColor, Q
 # فایل‌های مورد نیاز برای پردازش ویدیو
 import glob
 import platform
+import datetime
 from proglog import ProgressBarLogger
 from moviepy import ImageClip, VideoFileClip, concatenate_videoclips, ColorClip, CompositeVideoClip
 
@@ -246,9 +247,10 @@ class MultiFolderDialog(QDialog):
 class VideoProcessThread(QThread):
     progress_updated = Signal(str, float)
     stage_updated = Signal(str, str)  # folder_path, stage_description
-    process_finished = Signal(str, bool, str)  # folder_path, success, message
+    process_finished = Signal(str, bool, str, float)  # folder_path, success, message, elapsed_time
     check_output_file = Signal(str, str)  # folder_path, output_file_path
     ask_output_path = Signal(str, str)  # folder_path, default_filename
+    time_updated = Signal(str, float, float)  # folder_path, elapsed_time, estimated_remaining_time
 
     def __init__(self, folder_path, settings):
         super().__init__()
@@ -261,30 +263,56 @@ class VideoProcessThread(QThread):
         self.settings = settings
         self.overwrite_confirmed = False  # آیا کاربر تایید کرده است که فایل موجود بازنویسی شود
 
+        # متغیرهای مربوط به زمان‌سنجی
+        self.start_time = 0
+        self.last_progress_update = 0
+        self.last_progress_percent = 0
+        self.total_pause_time = 0
+        self.pause_start_time = 0
+
     def run(self):
+        self.start_time = time.time()
+        self.last_progress_update = self.start_time
+        self.total_pause_time = 0
+
         try:
+            # قبل از هر کار، پرچم‌های وضعیت را بازنشانی می‌کنیم
+            self.overwrite_confirmed = False
             self.process_video()
+
+            # محاسبه کل زمان صرف شده (با کسر زمان توقف)
+            elapsed_time = time.time() - self.start_time - self.total_pause_time
+
             if not self.cancelled:
-                self.process_finished.emit(self.folder_path, True, "عملیات با موفقیت انجام شد")
+                self.process_finished.emit(self.folder_path, True, "عملیات با موفقیت انجام شد", elapsed_time)
             else:
                 # پاک کردن فایل ناقص در صورت لغو
                 self.cleanup_output_file()
-                self.process_finished.emit(self.folder_path, False, "عملیات لغو شد")
+                self.process_finished.emit(self.folder_path, False, "عملیات لغو شد", elapsed_time)
         except Exception as e:
+            # محاسبه زمان صرف شده حتی در صورت خطا
+            elapsed_time = time.time() - self.start_time - self.total_pause_time
             # پاک کردن فایل ناقص در صورت خطا
             self.cleanup_output_file()
-            self.process_finished.emit(self.folder_path, False, str(e))
+            self.process_finished.emit(self.folder_path, False, str(e), elapsed_time)
 
     def cancel(self):
         self.cancelled = True
 
     def pause(self):
         """توقف موقت پردازش"""
-        self.paused = True
+        if not self.paused:
+            self.paused = True
+            self.pause_start_time = time.time()
 
     def resume(self):
         """ادامه پردازش"""
-        self.paused = False
+        if self.paused:
+            self.paused = False
+            # محاسبه زمان توقف و اضافه کردن به کل زمان توقف
+            if self.pause_start_time > 0:
+                self.total_pause_time += time.time() - self.pause_start_time
+                self.pause_start_time = 0
 
     def check_pause(self):
         """بررسی وضعیت توقف و انتظار تا ادامه پردازش"""
@@ -292,9 +320,15 @@ class VideoProcessThread(QThread):
         if self.pause_lock:
             return
 
+        if self.paused and not self.cancelled:
+            # ثبت زمان شروع توقف اگر هنوز ثبت نشده باشد
+            if self.pause_start_time == 0:
+                self.pause_start_time = time.time()
+
         while self.paused and not self.cancelled:
             # در حالت توقف، هر 0.5 ثانیه بررسی می‌کنیم که آیا باید ادامه دهیم
             time.sleep(0.5)
+            QApplication.processEvents()
 
     def set_pause_lock(self, locked):
         """تنظیم قفل توقف برای جلوگیری از توقف در مراحل حساس"""
@@ -325,13 +359,36 @@ class VideoProcessThread(QThread):
         """تنظیم مسیر فایل خروجی"""
         self.output_filename = path
 
+    def update_time_estimate(self, progress_percent):
+        """به‌روزرسانی تخمین زمان باقیمانده"""
+        current_time = time.time()
+        elapsed_time = current_time - self.start_time - self.total_pause_time
+
+        # حداقل 2 ثانیه از آپدیت قبلی گذشته باشد یا پیشرفت بیش از 2 درصد باشد
+        if (current_time - self.last_progress_update > 2 or
+            progress_percent - self.last_progress_percent > 2) and progress_percent > 0:
+
+            # تخمین زمان باقیمانده
+            if progress_percent < 100 and progress_percent > 0:
+                estimated_remaining = (elapsed_time * (100 - progress_percent)) / progress_percent
+            else:
+                estimated_remaining = 0
+
+            # ارسال سیگنال به‌روزرسانی زمان
+            self.time_updated.emit(self.folder_path, elapsed_time, estimated_remaining)
+
+            # به‌روزرسانی زمان و درصد آخرین آپدیت
+            self.last_progress_update = current_time
+            self.last_progress_percent = progress_percent
+
     class ThreadBarLogger(ProgressBarLogger):
-        def __init__(self, signal_fn, stage_fn, folder_path, check_pause_fn):
+        def __init__(self, signal_fn, stage_fn, folder_path, check_pause_fn, time_update_fn):
             super().__init__()
             self.signal_fn = signal_fn  # تابع سیگنال برای به‌روزرسانی درصد پیشرفت
             self.stage_fn = stage_fn  # تابع سیگنال برای به‌روزرسانی مرحله
             self.folder_path = folder_path
             self.check_pause_fn = check_pause_fn  # تابع بررسی وضعیت توقف
+            self.time_update_fn = time_update_fn  # تابع به‌روزرسانی تخمین زمان
             self.stages = {
                 "t": "در حال آماده‌سازی زمان‌بندی",
                 "chunk": "در حال چانک کردن فایل‌ها",
@@ -351,6 +408,8 @@ class VideoProcessThread(QThread):
             if attr == 'index':
                 percentage = (value / self.bars[bar]['total']) * 100
                 self.signal_fn(self.folder_path, percentage)
+                # به‌روزرسانی تخمین زمان
+                self.time_update_fn(percentage)
 
             # به‌روزرسانی مرحله پردازش
             if bar == 'chunk' and old_value is None:
@@ -441,20 +500,45 @@ class VideoProcessThread(QThread):
         return clip
 
     def process_video(self):
-        folder_path = self.folder_path
         self.update_stage("در حال آماده‌سازی")
 
-        if not os.path.exists(folder_path):
-            raise Exception(f"پوشه وجود ندارد: {folder_path}")
+        # مقداردهی اولیه متغیرهای زمان‌سنجی
+        self.last_progress_percent = 0
 
         # تعیین مسیر و نام فایل خروجی براساس تنظیمات
+        folder_path = self.folder_path
         folder_name = os.path.basename(folder_path)
         output_path_type = self.settings.get("output_path_type")
         output_filename_format = self.settings.get("output_filename_format")
 
-        # جایگزینی متغیرهای در فرمت نام فایل
-        output_filename = output_filename_format.format(folder_name=folder_name)
+        # جایگزینی متغیرهای در فرمت نام فایل با استفاده از روش ایمن
+        try:
+            # تاریخ امروز را با فرمت YYYY-MM-DD به دست می‌آوریم
+            today_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
+            # استفاده از format برای جایگزینی متغیرها
+            output_filename = output_filename_format.format(folder_name=folder_name, date=today_date)
+        except KeyError as e:
+            # اگر متغیر نامعتبری در الگو استفاده شده باشد
+            self.update_stage(f"خطا در الگوی نام فایل: متغیر {str(e)} موجود نیست")
+            # استفاده از یک نام پیش‌فرض
+            output_filename = f"{folder_name}_video.mp4"
+        except Exception as e:
+            # سایر خطاها
+            self.update_stage(f"خطا در الگوی نام فایل: {str(e)}")
+            # استفاده از یک نام پیش‌فرض
+            output_filename = f"{folder_name}_video.mp4"
+
+        # بررسی و مطمئن شدن که پسوند .mp4 وجود دارد
+        if not output_filename.lower().endswith('.mp4'):
+            output_filename += '.mp4'
+
+        # بررسی و اصلاح کاراکترهای غیرمجاز در نام فایل
+        # کاراکترهایی مانند /\:*?"<>| در نام فایل مشکل ایجاد می‌کنند
+        invalid_chars = r'[\\/*?:"<>|]'
+        output_filename = re.sub(invalid_chars, '_', output_filename)
+
+        # حالا تعیین مسیر کامل
         if output_path_type == "same_folder":
             # ذخیره در همان پوشه
             self.output_filename = os.path.join(folder_path, output_filename)
@@ -468,33 +552,33 @@ class VideoProcessThread(QThread):
             # درخواست مسیر از کاربر
             self.ask_output_path.emit(folder_path, output_filename)
             # منتظر پاسخ کاربر می‌مانیم
-            while not self.cancelled and not self.output_filename:
+            self.overwrite_confirmed = False  # بازنشانی پرچم
+            max_wait_time = 60  # حداکثر زمان انتظار به ثانیه
+            wait_start = time.time()
+
+            while not self.cancelled and not self.output_filename and (time.time() - wait_start < max_wait_time):
                 time.sleep(0.1)
+                QApplication.processEvents()  # اجازه پردازش رویدادها در رابط کاربری
 
             # اگر عملیات لغو شده یا کاربر مسیری انتخاب نکرده است
             if self.cancelled or not self.output_filename:
                 return
         else:
             # حالت پیش‌فرض: ذخیره در همان پوشه
-            self.output_filename = os.path.join(folder_path, f"{folder_name}_video.mp4")
+            self.output_filename = os.path.join(folder_path, output_filename)
 
-        # بررسی وجود فایل خروجی
-        if os.path.exists(self.output_filename):
-            # ارسال سیگنال برای بررسی تایید کاربر
-            self.check_output_file.emit(self.folder_path, self.output_filename)
-            # منتظر پاسخ کاربر می‌مانیم
-            while not self.cancelled and not self.overwrite_confirmed:
-                time.sleep(0.1)
+        # چاپ مسیر فایل خروجی برای اشکال‌زدایی
+        print(f"مسیر فایل خروجی: {self.output_filename}")
 
-            # اگر عملیات لغو شده یا کاربر تایید نکرده است
-            if self.cancelled:
-                return
+        if not os.path.exists(folder_path):
+            raise Exception(f"پوشه وجود ندارد: {folder_path}")
 
         progress_callback = self.ThreadBarLogger(
             self.progress_updated.emit,
             self.update_stage,
             folder_path,
-            self.check_pause
+            self.check_pause,
+            self.update_time_estimate
         )
 
         file_types = ['*.mp4', '*.avi', '*.mov', '*.mkv', '*.wmv',  # فرمت‌های ویدیو
@@ -579,6 +663,7 @@ class VideoProcessThread(QThread):
             progress_percent = (index / total_files) * 100
             self.progress_updated.emit(self.folder_path, progress_percent)
             self.update_stage(f"در حال بارگذاری {file_name} [{index + 1}/{total_files}]")
+            self.update_time_estimate(progress_percent)
 
             try:
                 if file_ext in ['.jpg', '.jpeg', '.png', '.bmp', '.gif']:
@@ -699,13 +784,18 @@ class VideoProcessThread(QThread):
 class FolderProcessWidget(QWidget):
     remove_requested = Signal(object)  # سیگنال برای درخواست حذف ویجت
 
-    def __init__(self, folder_path, queue_manager, settings, parent=None):
+    def __init__(self, folder_path, queue_manager, settings, main_window=None, parent=None):
         super().__init__(parent)
         self.folder_path = folder_path
         self.queue_manager = queue_manager
         self.settings = settings
+        self.main_window = main_window  # ذخیره مرجع پنجره اصلی
         self.thread = VideoProcessThread(folder_path, settings)
         self.status = "pending"  # وضعیت‌ها: pending, queued, running, paused, completed, cancelled, failed
+
+        # اضافه کردن متغیرهای مربوط به زمان
+        self.elapsed_time = 0
+        self.estimated_remaining_time = 0
 
         self.setup_ui()
         self.connect_signals()
@@ -761,9 +851,31 @@ class FolderProcessWidget(QWidget):
         progress_layout.addWidget(self.progress_percent_label)
         layout.addLayout(progress_layout)
 
+        # برچسب زمان باقیمانده
+        self.time_label = QLabel("زمان: 00:00:00 | باقیمانده: 00:00:00")
+        self.time_label.setStyleSheet("color: #555; padding: 5px;")
+        layout.addWidget(self.time_label)
+
         # دکمه‌های کنترل
         button_layout = QHBoxLayout()
         button_layout.addStretch(1)
+
+        # دکمه ساخت مجدد (در ابتدا پنهان است)
+        self.rebuild_button = QPushButton("ساخت مجدد")
+        self.rebuild_button.setToolTip("ساخت مجدد ویدئو با تنظیمات فعلی")
+        self.rebuild_button.clicked.connect(self.rebuild_process)
+        self.rebuild_button.setVisible(False)  # در ابتدا پنهان است
+        self.rebuild_button.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border-radius: 4px;
+                padding: 5px 10px;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
 
         self.pause_button = QPushButton("توقف")
         self.pause_button.clicked.connect(self.toggle_pause)
@@ -771,6 +883,7 @@ class FolderProcessWidget(QWidget):
         self.cancel_button = QPushButton("لغو")
         self.cancel_button.clicked.connect(self.cancel_process)
 
+        button_layout.addWidget(self.rebuild_button)
         button_layout.addWidget(self.pause_button)
         button_layout.addWidget(self.cancel_button)
 
@@ -788,14 +901,49 @@ class FolderProcessWidget(QWidget):
         QDesktopServices.openUrl(url)
 
     def connect_signals(self):
+        """اتصال سیگنال‌های ترد به ویجت"""
         self.thread.progress_updated.connect(self.update_progress)
         self.thread.stage_updated.connect(self.update_stage)
         self.thread.process_finished.connect(self.process_finished)
+        self.thread.time_updated.connect(self.update_time)  # اتصال سیگنال جدید
+
+        # اتصال سیگنال‌های ترد به پنجره اصلی
+        if self.main_window:
+            self.thread.check_output_file.connect(self.main_window.handle_output_file_check)
+            self.thread.ask_output_path.connect(self.main_window.handle_output_path_request)
 
     def start_process(self):
         """اضافه کردن این پردازش به مدیر صف"""
         self.status = "pending"
         self.queue_manager.add_task(self, self.thread)
+
+    def rebuild_process(self):
+        """شروع مجدد پردازش با تنظیمات فعلی"""
+        # حذف ترد قبلی
+        if hasattr(self, 'thread') and self.thread:
+            self.queue_manager.remove_widget(self.thread)
+
+        # ایجاد ترد جدید
+        self.thread = VideoProcessThread(self.folder_path, self.settings)
+
+        # اتصال مجدد سیگنال‌ها
+        self.connect_signals()
+
+        # ریست کردن UI
+        self.status = "pending"
+        self.progress_bar.setValue(0)
+        self.progress_percent_label.setText("0%")
+        self.stage_label.setText("مرحله: در انتظار شروع")
+        self.status_label.setText("وضعیت: در انتظار")
+        self.time_label.setText("زمان: 00:00:00 | باقیمانده: 00:00:00")
+
+        # پنهان کردن دکمه ساخت مجدد و نمایش دکمه‌های دیگر
+        self.rebuild_button.setVisible(False)
+        self.pause_button.setEnabled(True)
+        self.cancel_button.setEnabled(True)
+
+        # شروع پردازش
+        self.start_process()
 
     def status_changed(self, new_status):
         """به‌روزرسانی وضعیت ویجت"""
@@ -837,6 +985,12 @@ class FolderProcessWidget(QWidget):
         elif self.status == "paused":
             self.queue_manager.resume_task(self.thread)
 
+    def format_time(self, seconds):
+        """تبدیل زمان به فرمت ساعت:دقیقه:ثانیه"""
+        hours, remainder = divmod(int(seconds), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
     def cancel_process(self):
         """لغو پردازش"""
         self.status_label.setText("وضعیت: در حال لغو...")
@@ -844,6 +998,20 @@ class FolderProcessWidget(QWidget):
         self.pause_button.setEnabled(False)
         self.cancel_button.setEnabled(False)
         self.queue_manager.cancel_task(self.thread)
+
+    @Slot(str, float, float)
+    def update_time(self, folder_path, elapsed_time, estimated_remaining_time):
+        """به‌روزرسانی نمایش زمان سپری شده و تخمین زمان باقیمانده"""
+        if folder_path == self.folder_path:
+            self.elapsed_time = elapsed_time
+            self.estimated_remaining_time = estimated_remaining_time
+
+            # تبدیل زمان‌ها به فرمت ساعت:دقیقه:ثانیه
+            elapsed_formatted = self.format_time(elapsed_time)
+            estimated_formatted = self.format_time(estimated_remaining_time)
+
+            # به‌روزرسانی برچسب زمان
+            self.time_label.setText(f"زمان: {elapsed_formatted} | باقیمانده: {estimated_formatted}")
 
     @Slot(str, float)
     def update_progress(self, folder_path, percentage):
@@ -857,8 +1025,9 @@ class FolderProcessWidget(QWidget):
         if folder_path == self.folder_path:
             self.stage_label.setText(f"مرحله: {stage}")
 
-    @Slot(str, bool, str)
-    def process_finished(self, folder_path, success, message):
+    @Slot(str, bool, str, float)
+    def process_finished(self, folder_path, success, message, elapsed_time=0):
+        """پردازش پایان یافته است"""
         if folder_path == self.folder_path:
             if success:
                 self.status = "completed"
@@ -867,17 +1036,32 @@ class FolderProcessWidget(QWidget):
                 self.progress_bar.setValue(100)
                 self.progress_percent_label.setText("100%")
 
+                # نمایش زمان کل پردازش
+                elapsed_formatted = self.format_time(elapsed_time)
+                self.time_label.setText(f"زمان کل ساخت: {elapsed_formatted}")
+
+                # نمایش دکمه ساخت مجدد
+                self.rebuild_button.setVisible(True)
+
                 # نمایش نوتیفیکیشن
                 folder_name = os.path.basename(folder_path)
                 self.queue_manager.parent.show_notification(
                     f"پردازش {folder_name} تکمیل شد",
-                    f"پردازش پوشه {folder_name} با موفقیت به پایان رسید."
+                    f"پردازش پوشه {folder_name} با موفقیت در {elapsed_formatted} به پایان رسید."
                 )
             else:
                 self.status = "failed"
                 self.status_label.setText("وضعیت: ناموفق")
                 self.stage_label.setText(f"مرحله: خطا - {message}")
                 self.status_label.setToolTip(message)
+
+                # نمایش زمان کل پردازش
+                if elapsed_time > 0:
+                    elapsed_formatted = self.format_time(elapsed_time)
+                    self.time_label.setText(f"زمان صرف شده: {elapsed_formatted}")
+
+                # نمایش دکمه ساخت مجدد حتی در صورت خطا
+                self.rebuild_button.setVisible(True)
 
             self.pause_button.setEnabled(False)
             self.cancel_button.setEnabled(False)
@@ -1163,14 +1347,38 @@ class SettingsDialog(QDialog):
         output_path_layout.addWidget(self.ask_user_radio)
 
         # فیلد برای فرمت نام فایل خروجی
-        filename_layout = QHBoxLayout()
+        filename_layout = QVBoxLayout()
+
+        # بخش بالایی: کمبوباکس فرمت‌های پرکاربرد
+        format_header_layout = QHBoxLayout()
+        format_header_layout.addWidget(QLabel("الگوی نام فایل خروجی:"))
+
+        self.format_templates = QComboBox()
+        self.format_templates.addItem("انتخاب الگوی پیش‌فرض...", "")
+        self.format_templates.addItem("نام‌پوشه_video.mp4", "{folder_name}_video.mp4")
+        self.format_templates.addItem("video_نام‌پوشه.mp4", "video_{folder_name}.mp4")
+        self.format_templates.addItem("نام‌پوشه.mp4", "{folder_name}.mp4")
+        self.format_templates.addItem("نام‌پوشه_تاریخ.mp4", "{folder_name}_{date}.mp4")
+        self.format_templates.addItem("output.mp4", "output.mp4")
+        self.format_templates.currentIndexChanged.connect(self.apply_filename_template)
+
+        format_header_layout.addWidget(self.format_templates)
+        filename_layout.addLayout(format_header_layout)
+
+        # بخش پایینی: فیلد متن برای ویرایش دستی فرمت
+        format_input_layout = QHBoxLayout()
+        format_input_layout.addWidget(QLabel("فرمت:"))
         self.output_filename_format = QLineEdit(self.settings.get("output_filename_format"))
-        filename_layout.addWidget(QLabel("فرمت نام فایل خروجی:"))
-        filename_layout.addWidget(self.output_filename_format)
+        format_input_layout.addWidget(self.output_filename_format)
+        filename_layout.addLayout(format_input_layout)
+
         output_path_layout.addLayout(filename_layout)
 
-        # راهنمای فرمت نام فایل
-        filename_help = QLabel("می‌توانید از {folder_name} برای نام پوشه استفاده کنید")
+        # راهنمای فرمت نام فایل - بهبود یافته
+        filename_help = QLabel("متغیرهای قابل استفاده:\n"
+                               "{folder_name} = نام پوشه\n"
+                               "{date} = تاریخ فعلی (YYYY-MM-DD)")
+        filename_help.setWordWrap(True)
         filename_help.setStyleSheet("color: #666666; font-size: 11px;")
         output_path_layout.addWidget(filename_help)
 
@@ -1243,6 +1451,14 @@ class SettingsDialog(QDialog):
         self.toggle_regex_field(self.sort_date.isChecked())
         self.toggle_fixed_folder_section(self.fixed_folder_radio.isChecked())
         self.toggle_scaling_options(self.normalize_all_clips.isChecked())
+
+    def apply_filename_template(self, index):
+        """اعمال الگوی انتخاب شده از منوی کشویی به فیلد فرمت"""
+        if index > 0:  # اگر گزینه غیر از اولین گزینه (راهنما) انتخاب شده است
+            # به جای currentData از itemData استفاده می‌کنیم
+            template = self.format_templates.itemData(index)
+            if template:
+                self.output_filename_format.setText(template)
 
     def toggle_custom_resolution(self, enabled):
         """فعال/غیرفعال کردن فیلدهای رزولوشن سفارشی"""
@@ -1659,17 +1875,12 @@ class MainWindow(QMainWindow):
                 QMessageBox.warning(self, "هشدار", f"پوشه {folder} قبلاً اضافه شده است.")
                 continue
 
-            # ایجاد ویجت برای این پوشه
-            folder_widget = FolderProcessWidget(folder, self.queue_manager, self.settings)
+            # ایجاد ویجت برای این پوشه - انتقال مرجع به پنجره اصلی
+            folder_widget = FolderProcessWidget(folder, self.queue_manager, self.settings, self)
             self.folder_widgets[folder] = folder_widget
 
             # اتصال سیگنال حذف ویجت
             folder_widget.remove_requested.connect(self.remove_folder_widget)
-
-            # اتصال سیگنال‌های ترد
-            thread = folder_widget.thread
-            thread.check_output_file.connect(self.handle_output_file_check)
-            thread.ask_output_path.connect(self.handle_output_path_request)
 
             # قرار دادن قبل از فضای خالی انتهایی
             self.scroll_layout.insertWidget(self.scroll_layout.count() - 1, folder_widget)
