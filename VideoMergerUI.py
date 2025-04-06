@@ -18,7 +18,7 @@ from PySide6.QtGui import QIcon, QDragEnterEvent, QDropEvent, QPixmap, QColor, Q
 import glob
 import platform
 from proglog import ProgressBarLogger
-from moviepy import ImageClip, VideoFileClip, concatenate_videoclips, ColorClip, CompositeVideoClip
+from moviepy.editor import ImageClip, VideoFileClip, concatenate_videoclips, ColorClip, CompositeVideoClip
 
 
 class Settings:
@@ -408,7 +408,7 @@ class VideoProcessThread(QThread):
 
         elif scaling_mode == "fit":
             # قرار دادن کامل در قاب (ممکن است حاشیه‌های خالی اضافه شود)
-            resized_clip = clip.resize(width=width, height=height, keep_aspect_ratio=True)
+            resized_clip = clip.resize(width=width, height=height)
 
             # ساخت یک کلیپ با اندازه و رنگ پس‌زمینه دلخواه
             color_clip = ColorClip(size=(width, height), color=bg_color, duration=clip.duration)
@@ -448,7 +448,7 @@ class VideoProcessThread(QThread):
             raise Exception(f"پوشه وجود ندارد: {folder_path}")
 
         # تعیین مسیر و نام فایل خروجی براساس تنظیمات
-        folder_name = os.path.basename(folder_path)
+        folder_name = os.path.basename(os.path.dirname(folder_path))
         output_path_type = self.settings.get("output_path_type")
         output_filename_format = self.settings.get("output_filename_format")
 
@@ -542,15 +542,17 @@ class VideoProcessThread(QThread):
 
         # تعیین رزولوشن خروجی
         target_resolution = None
-        if output_resolution != "original":
+        if use_custom_resolution:
+            # اگر رزولوشن سفارشی فعال باشد، از مقادیر سفارشی استفاده کن
+            target_resolution = (output_width, output_height)
+        elif output_resolution != "original":
+            # در غیر این صورت اگر original نباشد، از رزولوشن‌های از پیش تعریف شده استفاده کن
             if output_resolution == "480p":
-                target_resolution = (640, 480)  # عرض، ارتفاع
+                target_resolution = (640, 480)
             elif output_resolution == "720p":
                 target_resolution = (1280, 720)
             elif output_resolution == "1080p":
                 target_resolution = (1920, 1080)
-            elif use_custom_resolution:
-                target_resolution = (output_width, output_height)
 
         # نمایش تعداد فایل‌ها برای اطلاعات بیشتر
         self.update_stage(f"بارگذاری {len(sorted_files)} فایل")
@@ -765,12 +767,31 @@ class FolderProcessWidget(QWidget):
         button_layout = QHBoxLayout()
         button_layout.addStretch(1)
 
+        # اضافه کردن دکمه ساخت مجدد
+        self.rebuild_button = QPushButton("ساخت مجدد")
+        self.rebuild_button.clicked.connect(self.rebuild_process)
+        self.rebuild_button.setVisible(False)  # در ابتدا مخفی است
+        self.rebuild_button.setStyleSheet("""
+                QPushButton {
+                    background-color: #4a86e8;
+                    color: white;
+                    border-radius: 4px;
+                    padding: 5px 10px;
+                    font-weight: bold;
+                }
+                QPushButton:hover {
+                    background-color: #3a76d8;
+                }
+            """)
+        self.rebuild_button.setToolTip("ساخت مجدد ویدیو برای این پوشه")
+
         self.pause_button = QPushButton("توقف")
         self.pause_button.clicked.connect(self.toggle_pause)
 
         self.cancel_button = QPushButton("لغو")
         self.cancel_button.clicked.connect(self.cancel_process)
 
+        button_layout.addWidget(self.rebuild_button)
         button_layout.addWidget(self.pause_button)
         button_layout.addWidget(self.cancel_button)
 
@@ -801,34 +822,38 @@ class FolderProcessWidget(QWidget):
         """به‌روزرسانی وضعیت ویجت"""
         self.status = new_status
         if new_status == "queued":
-            self.status_label.setText("وضعیت: در صف")
+            self.status_label.setText("وضعیت: در صف 🕒")
             self.stage_label.setText("مرحله: در انتظار اجرا")
             self.pause_button.setEnabled(False)
+            self.cancel_button.setEnabled(True)
+            self.rebuild_button.setVisible(False)
         elif new_status == "running":
-            self.status_label.setText("وضعیت: در حال پردازش")
+            self.status_label.setText("وضعیت: در حال پردازش ⏳")
             self.pause_button.setText("توقف")
             self.pause_button.setEnabled(True)
+            self.cancel_button.setEnabled(True)
+            self.rebuild_button.setVisible(False)
         elif new_status == "paused":
-            self.status_label.setText("وضعیت: متوقف شده")
+            self.status_label.setText("وضعیت: متوقف شده ⏸️")
             self.pause_button.setText("ادامه")
             self.pause_button.setEnabled(True)
-        elif new_status == "cancelled":
-            self.status_label.setText("وضعیت: لغو شده")
-            self.stage_label.setText("مرحله: عملیات لغو شد")
-            self.pause_button.setEnabled(False)
-            self.cancel_button.setEnabled(False)
-
-            # بعد از 2 ثانیه ویجت را حذف کن
-            QTimer.singleShot(2000, lambda: self.remove_requested.emit(self))
-
+            self.cancel_button.setEnabled(True)
+            self.rebuild_button.setVisible(False)
         elif new_status == "completed":
-            self.status_label.setText("وضعیت: تکمیل شده")
+            self.status_label.setText("وضعیت: تکمیل شده ✅")
             self.pause_button.setEnabled(False)
             self.cancel_button.setEnabled(False)
+            self.rebuild_button.setVisible(True)
+        elif new_status == "cancelled":
+            self.status_label.setText("وضعیت: لغو شده ❌")
+            self.pause_button.setEnabled(False)
+            self.cancel_button.setEnabled(False)
+            self.rebuild_button.setVisible(True)
         elif new_status == "failed":
-            self.status_label.setText("وضعیت: ناموفق")
+            self.status_label.setText("وضعیت: خطا ⚠️")
             self.pause_button.setEnabled(False)
             self.cancel_button.setEnabled(False)
+            self.rebuild_button.setVisible(True)
 
     def toggle_pause(self):
         """توقف یا ادامه پردازش"""
@@ -859,30 +884,98 @@ class FolderProcessWidget(QWidget):
 
     @Slot(str, bool, str)
     def process_finished(self, folder_path, success, message):
-        if folder_path == self.folder_path:
-            if success:
-                self.status = "completed"
-                self.status_label.setText("وضعیت: تکمیل شد")
-                self.stage_label.setText("مرحله: عملیات با موفقیت به پایان رسید")
-                self.progress_bar.setValue(100)
-                self.progress_percent_label.setText("100%")
+        if folder_path != self.folder_path:
+            return
 
-                # نمایش نوتیفیکیشن
-                folder_name = os.path.basename(folder_path)
-                self.queue_manager.parent.show_notification(
-                    f"پردازش {folder_name} تکمیل شد",
-                    f"پردازش پوشه {folder_name} با موفقیت به پایان رسید."
-                )
-            else:
-                self.status = "failed"
-                self.status_label.setText("وضعیت: ناموفق")
-                self.stage_label.setText(f"مرحله: خطا - {message}")
-                self.status_label.setToolTip(message)
+        if success:
+            self.status = "completed"
+            self.status_label.setText("وضعیت: تکمیل شده")
+            self.progress_bar.setValue(100)
+            self.progress_percent_label.setText("100%")
+        else:
+            self.status = "failed"
+            self.status_label.setText("وضعیت: ناموفق")
+            self.stage_label.setText(f"خطا: {message}")
 
-            self.pause_button.setEnabled(False)
-            self.cancel_button.setEnabled(False)
+        # نمایش دکمه پردازش مجدد برای همه حالت‌ها (موفق، ناموفق، لغو شده)
+        self.rebuild_button.setVisible(True)
+        self.pause_button.setVisible(False)
+        self.cancel_button.setVisible(False)
+
+        # اعلام پایان به مدیر صف
+        self.queue_manager.task_finished(self.thread)
+
+    def rebuild_process(self):
+        """شروع مجدد پردازش پوشه"""
+        # ایجاد یک ترد جدید
+        self.thread = VideoProcessThread(self.folder_path, self.settings)
+
+        # اتصال مجدد سیگنال‌ها
+        self.thread.progress_updated.connect(self.update_progress)
+        self.thread.stage_updated.connect(self.update_stage)
+        self.thread.process_finished.connect(self.process_finished)
+        self.thread.check_output_file.connect(self.handle_output_file_check)
+        self.thread.ask_output_path.connect(self.handle_ask_output_path)
+
+        # بازنشانی وضعیت UI
+        self.progress_bar.setValue(0)
+        self.progress_percent_label.setText("0%")
+        self.stage_label.setText("مرحله: در انتظار شروع")
+        self.status_label.setText("وضعیت: در انتظار")
+        self.rebuild_button.setVisible(False)
+        self.pause_button.setVisible(True)
+        self.cancel_button.setVisible(True)
+
+        # شروع پردازش
+        self.start_process()
+
+    def handle_output_file_check(self, folder_path, file_path):
+        """بررسی وجود فایل خروجی قبلی"""
+        if folder_path != self.folder_path:
+            return
+
+        # پرسش از کاربر برای بازنویسی
+        msg_box = QMessageBox()
+        msg_box.setWindowTitle("فایل موجود است")
+        msg_box.setText(f"فایل '{os.path.basename(file_path)}' قبلاً ایجاد شده است. آیا می‌خواهید آن را بازنویسی کنید؟")
+        msg_box.setIcon(QMessageBox.Question)
+        yes_button = msg_box.addButton("بله", QMessageBox.YesRole)
+        no_button = msg_box.addButton("خیر", QMessageBox.NoRole)
+        msg_box.exec()
+
+        if msg_box.clickedButton() == yes_button:
+            # کاربر بازنویسی را تأیید کرد
+            self.thread.set_overwrite_confirmed(True)
+        else:
+            # کاربر لغو کرد
+            self.thread.cancel()
+            self.status = "cancelled"
+            self.status_label.setText("وضعیت: لغو شده")
+            self.rebuild_button.setVisible(True)
+            self.pause_button.setVisible(False)
+            self.cancel_button.setVisible(False)
             self.queue_manager.task_finished(self.thread)
 
+    def handle_ask_output_path(self, folder_path, default_filename):
+        """درخواست مسیر برای ذخیره فایل خروجی"""
+        if folder_path != self.folder_path:
+            return
+
+        # پرسش از کاربر برای محل ذخیره
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "انتخاب محل ذخیره فایل", default_filename, "فایل‌های ویدیویی (*.mp4)")
+
+        if file_path:
+            self.thread.set_output_filename(file_path)
+        else:
+            # کاربر لغو کرد
+            self.thread.cancel()
+            self.status = "cancelled"
+            self.status_label.setText("وضعیت: لغو شده")
+            self.rebuild_button.setVisible(True)
+            self.pause_button.setVisible(False)
+            self.cancel_button.setVisible(False)
+            self.queue_manager.task_finished(self.thread)
 
 class SettingsDialog(QDialog):
     def __init__(self, settings, queue_manager, parent=None):
