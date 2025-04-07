@@ -152,14 +152,58 @@ def main():
 
     # Set up Python command based on OS
     current_os = platform.system()
-    python_cmd = "python" if current_os == "Windows" else "python3"
-
-    # Check if venv already exists
-    venv_name = "venv"
-    build_venv_name = "build_env"
-
+    
+    # First try to use the Python from .venv if it exists
+    venv_name = ".venv"
     if is_valid_venv(venv_name):
         print(f"✅ Found existing virtual environment: '{venv_name}'")
+        if current_os == "Windows":
+            python_cmd = os.path.join(venv_name, "Scripts", "python.exe")
+        else:
+            python_cmd = os.path.join(venv_name, "bin", "python")
+        
+        # Verify Python version in venv
+        try:
+            result = subprocess.run([python_cmd, "--version"], capture_output=True, text=True)
+            print(f"Using Python from venv: {result.stdout.strip()}")
+        except Exception as e:
+            print(f"❌ Error checking Python version in venv: {e}")
+            python_cmd = None
+    else:
+        python_cmd = None
+
+    # If no valid venv or Python in venv, try system Python
+    if not python_cmd:
+        if current_os == "Windows":
+            # Try different Python commands on Windows
+            python_commands = ["python", "py"]
+            for cmd in python_commands:
+                try:
+                    result = subprocess.run([cmd, "--version"], capture_output=True, text=True)
+                    python_cmd = cmd
+                    print(f"Using system Python: {result.stdout.strip()}")
+                    break
+                except Exception:
+                    continue
+        else:  # macOS or Linux
+            # Use /usr/bin/python3 on macOS
+            python_cmd = "/usr/bin/python3"
+            try:
+                result = subprocess.run([python_cmd, "--version"], capture_output=True, text=True)
+                print(f"Using system Python: {result.stdout.strip()}")
+            except Exception as e:
+                print(f"❌ Error using {python_cmd}: {e}")
+                python_cmd = None
+
+        if not python_cmd:
+            print("❌ No Python installation found. Please install Python and try again.")
+            sys.exit(1)
+
+    # Check if venv already exists
+    build_venv_name = ".build_env"
+
+    if is_valid_venv(venv_name):
+        print(f"✅ Using existing virtual environment: '{venv_name}'")
         venv_path = venv_name
         create_new_venv = False
     else:
@@ -173,7 +217,9 @@ def main():
 
         # Create virtual environment
         print(f"Creating virtual environment '{build_venv_name}'...")
-        run_command(f"{python_cmd} -m venv {build_venv_name}")
+        if not run_command(f"{python_cmd} -m venv {build_venv_name}"):
+            print("❌ Failed to create virtual environment")
+            sys.exit(1)
 
     # Set pip path based on OS and venv
     if current_os == "Windows":
@@ -183,15 +229,35 @@ def main():
 
     # Only upgrade pip if we created a new venv
     if create_new_venv:
-        run_command(f"{pip_cmd} install --upgrade pip")
+        print("Upgrading pip...")
+        if not run_command(f"{pip_cmd} install --upgrade pip"):
+            print("❌ Failed to upgrade pip")
+            sys.exit(1)
 
-    # Install dependencies from requirements.txt
+    # Install dependencies from requirements.txt with verbose output
     print("Installing dependencies from requirements.txt...")
-    run_command(f"{pip_cmd} install -r requirements.txt")
+    try:
+        result = subprocess.run(
+            [pip_cmd, "install", "-r", "requirements.txt"],
+            capture_output=True,
+            text=True
+        )
+        if result.returncode != 0:
+            print("❌ Failed to install dependencies")
+            print("Error output:")
+            print(result.stderr)
+            sys.exit(1)
+        else:
+            print("✅ Dependencies installed successfully")
+    except Exception as e:
+        print(f"❌ Error installing dependencies: {e}")
+        sys.exit(1)
 
     # Install PyInstaller if not already installed
     print("Ensuring PyInstaller is installed...")
-    run_command(f"{pip_cmd} install pyinstaller")
+    if not run_command(f"{pip_cmd} install pyinstaller"):
+        print("❌ Failed to install PyInstaller")
+        sys.exit(1)
 
     # Create dist directory if it doesn't exist
     if not os.path.exists("dist"):
