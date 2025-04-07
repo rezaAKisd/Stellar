@@ -1,148 +1,201 @@
-# VideoMergerUI
+# Stellar - Video Merger UI
 
-A user-friendly application for merging videos and images with a graphical user interface.
+A modern, user-friendly application for merging video files with a beautiful UI.
 
 ## Features
 
-- Merge multiple videos and images into a single file
-- Process multiple folders simultaneously
-- Support for various video formats and codecs
-- Drag & Drop graphical user interface
-- Advanced output quality settings
-- Cross-platform support
+- Merge multiple video files into one
+- Beautiful and intuitive user interface
+- Support for various video formats
+- Cross-platform compatibility (Windows, macOS, Linux)
+- Automated builds and releases
+- System-specific Python version support
 
 ## Prerequisites
 
-- Python 3.9 or higher
+- Python 3.9 or higher (any compatible version)
 - pip (Python package manager)
-- Sufficient disk space for dependencies
 
 ## Installation
 
-### 1. Create Virtual Environment
+### Windows
 
-#### Windows:
 ```bash
-# Create virtual environment
+# Create a virtual environment
 python -m venv .venv
 
-# Activate virtual environment
+# Activate the virtual environment
 .venv\Scripts\activate
-```
 
-#### macOS/Linux:
-```bash
-# Create virtual environment
-python3 -m venv .venv
-
-# Activate virtual environment
-source .venv/bin/activate
-```
-
-### 2. Install Dependencies
-
-After activating the virtual environment, install the dependencies:
-
-```bash
+# Install dependencies
 pip install -r requirements.txt
 ```
 
-### 3. Run the Application
-
-#### Method 1: Direct Execution
-```bash
-python main.py
-```
-
-#### Method 2: Build Executable
-To create an executable file, use the `build.py` script:
+### macOS/Linux
 
 ```bash
-python build.py
-```
+# Create a virtual environment
+python3 -m venv .venv
 
-After running the script, executable files will be created in the `dist` folder:
-- Windows: `VideoMerger.exe`
-- macOS: `VideoMerger.app`
+# Activate the virtual environment
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
+```
 
 ## Usage
 
-1. Launch the application
-2. Drag and drop folders containing videos and images into the main window
-3. Configure your settings:
-   - Image display duration
-   - Output quality
-   - Output filename
-   - Other settings
-4. Click the "Start Processing" button
+### Running the Application
+
+```bash
+# Activate the virtual environment (if not already activated)
+# Windows
+.venv\Scripts\activate
+# macOS/Linux
+source .venv/bin/activate
+
+# Run the application
+python main.py
+```
+
+### Building Executables
+
+The project includes a build script that can create platform-specific executables. The script will automatically:
+1. Find a compatible Python installation (3.9 or higher)
+2. Create a clean virtual environment
+3. Install all required dependencies
+4. Build the executable for the specified platform
+5. Clean up temporary files
+
+#### Local Build
+
+```bash
+# For Windows
+export BUILD_PLATFORM=windows
+python build.py
+
+# For macOS
+export BUILD_PLATFORM=macos
+python build.py
+
+# For Linux
+export BUILD_PLATFORM=linux
+python build.py
+```
+
+The build script will use the system's Python installation as long as it meets the minimum version requirement (Python 3.9 or higher).
+
+#### Automated Builds (CI/CD)
+
+The project uses GitHub Actions for automated builds. When you push to the master branch:
+1. Three parallel jobs run to build for Windows, macOS, and Linux
+2. Each job uses the system Python on the respective platform
+3. A new release is created with all platform builds
+
+To test the CI/CD workflow locally:
+```bash
+# Install act (GitHub Actions local runner)
+brew install act
+
+# List available jobs
+act -l
+
+# Run all jobs
+act
+```
+
+## Python Version Support
+
+The application is designed to work with any Python 3.9 or higher installation. The build script will:
+1. Check for available Python installations
+2. Verify the version meets the minimum requirement
+3. Use the first compatible version found
+
+Supported Python paths:
+- Windows: `python`, `py`
+- macOS: `/usr/bin/python3`, `/usr/local/bin/python3`, `/opt/homebrew/bin/python3`
+- Linux: `/usr/bin/python3`
 
 ## Default Settings
 
-- Image display duration: 10 seconds
-- Output quality: Original
-- Video codec: libx264
-- Video bitrate: 700k
-- Audio codec: aac
-- Audio bitrate: 128k
-- FPS: 30
+- Output format: MP4
+- Video codec: H.264
+- Audio codec: AAC
+- Resolution: Same as first input video
+- Frame rate: Same as first input video
 
 ## Supported Platforms
 
-- Windows 10/11
-- macOS 10.15 or higher
-- Linux (tested on Ubuntu 20.04)
+- Windows 10/11 (64-bit)
+- macOS 10.15 or later
+- Linux (Ubuntu 20.04 or later)
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Dependency Installation Errors**:
-   - Ensure the virtual environment is activated
-   - Run `pip install -r requirements.txt` again
+1. **Python Version Issues**
+   - Ensure you have Python 3.9 or higher installed
+   - The build script will automatically find a compatible version
+   - Check available Python versions: `python --version`
 
-2. **Application Runtime Errors**:
-   - Verify all dependencies are installed
-   - Reactivate the virtual environment
-   - Restart the application
+2. **Missing Dependencies**
+   - Ensure all requirements are installed: `pip install -r requirements.txt`
+   - The build script will handle dependency installation
 
-3. **Executable Build Issues**:
-   - Ensure PyInstaller is installed
-   - Run the `build.py` script again
+3. **Build Issues**
+   - Clean up previous builds: Delete `dist/` and `build/` directories
+   - Ensure virtual environment is activated
+   - Check BUILD_PLATFORM environment variable is set correctly
+
+4. **Video Processing Issues**
+   - Verify input video formats are supported
+   - Check available disk space
+   - Ensure sufficient system memory
+
+### Getting Help
+
+If you encounter any issues:
+1. Check the [Troubleshooting Guide](docs/troubleshooting.md)
+2. Search existing [issues](https://github.com/yourusername/VideoMergerUI/issues)
+3. Create a new issue with detailed information
 
 ## Contributing
 
-We welcome contributions from the community! Here's how you can help:
+We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on:
+- Code style
+- Pull request process
+- Development workflow
+
+### Development Setup
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+2. Create a feature branch
+3. Make your changes
+4. Run tests: `python -m pytest`
+5. Submit a pull request
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/yourusername/VideoMergerUI/tags).
+We use [SemVer](http://semver.org/) for versioning. For available versions, see the [tags](https://github.com/yourusername/VideoMergerUI/tags).
 
 ## Authors
 
 - **Your Name** - *Initial work* - [YourUsername](https://github.com/yourusername)
 
-See also the list of [contributors](https://github.com/yourusername/VideoMergerUI/contributors) who participated in this project.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-
 ## Acknowledgments
 
-- Thanks to all contributors who have helped with this project
-- Special thanks to the open source community for their tools and libraries
+- Thanks to all contributors
+- Special thanks to the open-source community
+- Inspired by similar projects
 
 ## Support
 
-If you encounter any issues or have suggestions:
-1. Check the [existing issues](https://github.com/yourusername/VideoMergerUI/issues)
-2. Create a new issue with detailed information
-3. Join our [Discord community](https://discord.gg/your-server) for real-time support 
+- [Discord Community](https://discord.gg/your-invite-link)
+- [GitHub Issues](https://github.com/yourusername/VideoMergerUI/issues)
+- Email: your.email@example.com
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
