@@ -9,6 +9,7 @@ on:
 jobs:
   build-windows:
     runs-on: windows-latest
+    timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
 
@@ -41,9 +42,11 @@ jobs:
       with:
         name: windows-build
         path: dist/*.exe
+        retention-days: 5
 
   build-macos:
     runs-on: macos-latest
+    timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
 
@@ -71,9 +74,11 @@ jobs:
         path: |
           dist/*.app
           dist/*.dmg
+        retention-days: 5
 
   build-linux:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
     - uses: actions/checkout@v4
 
@@ -98,10 +103,12 @@ jobs:
       with:
         name: linux-build
         path: dist/*
+        retention-days: 5
 
   release:
     needs: [build-windows, build-macos, build-linux]
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     if: github.ref == 'refs/heads/master'
 
     steps:
@@ -111,6 +118,7 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         path: artifacts
+        retry-on-error: true
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
