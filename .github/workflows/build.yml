@@ -68,7 +68,9 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: macos-build
-        path: dist/*.{app,dmg}
+        path: |
+          dist/*.app
+          dist/*.dmg
 
   build-linux:
     runs-on: ubuntu-latest
@@ -115,7 +117,22 @@ jobs:
       with:
         files: |
           artifacts/windows-build/*.exe
-          artifacts/macos-build/*.{app,dmg}
+          artifacts/macos-build/*.app
+          artifacts/macos-build/*.dmg
           artifacts/linux-build/*
+        tag_name: release-${{ github.run_number }}
+        name: Release ${{ github.run_number }}
+        body: |
+          Automated release for all platforms
+          
+          ### Windows
+          - Executable (.exe)
+          
+          ### macOS
+          - Application bundle (.app)
+          - Disk image (.dmg)
+          
+          ### Linux
+          - Binary executable
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
