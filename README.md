@@ -1,6 +1,28 @@
 # Stellar
 
-Stellar یک برنامه دسکتاپ برای ادغام ویدیوها و تصاویر است که با PySide6 ساخته شده است.
+[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
+
+Stellar is a desktop application for merging videos and images, built with PySide6.
+
+## Quick Start
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/Stellar.git
+cd Stellar
+
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+python main.py
+```
 
 ## Features
 
@@ -13,7 +35,7 @@ Stellar یک برنامه دسکتاپ برای ادغام ویدیوها و ت�
 
 ## Prerequisites
 
-- Python
+- Python 3.9 or higher
 - pip (Python package manager)
 
 ## Installation
@@ -84,8 +106,6 @@ export BUILD_PLATFORM=linux
 python build.py
 ```
 
-The build script will use the system's Python installation as long as it meets the minimum version requirement (Python 3.9 or higher).
-
 #### Automated Builds (CI/CD)
 
 The project uses GitHub Actions for automated builds. When you push to the master branch:
@@ -105,19 +125,9 @@ act -l
 act
 ```
 
-## Python Version Support
+## Configuration
 
-The application is designed to work with any Python 3.9 or higher installation. The build script will:
-1. Check for available Python installations
-2. Verify the version meets the minimum requirement
-3. Use the first compatible version found
-
-Supported Python paths:
-- Windows: `python`, `py`
-- macOS: `/usr/bin/python3`, `/usr/local/bin/python3`, `/opt/homebrew/bin/python3`
-- Linux: `/usr/bin/python3`
-
-## Default Settings
+### Default Settings
 
 - Output format: MP4
 - Video codec: H.264
@@ -125,7 +135,7 @@ Supported Python paths:
 - Resolution: Same as first input video
 - Frame rate: Same as first input video
 
-## Supported Platforms
+### Supported Platforms
 
 - Windows 10/11 (64-bit)
 - macOS 10.15 or later
@@ -154,13 +164,6 @@ Supported Python paths:
    - Check available disk space
    - Ensure sufficient system memory
 
-### Getting Help
-
-If you encounter any issues:
-1. Check the [Troubleshooting Guide](docs/troubleshooting.md)
-2. Search existing [issues](https://github.com/yourusername/Stellar/issues)
-3. Create a new issue with detailed information
-
 ## Contributing
 
 We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on:
@@ -176,20 +179,6 @@ We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING
 4. Run tests: `python -m pytest`
 5. Submit a pull request
 
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For available versions, see the [tags](https://github.com/yourusername/Stellar/tags).
-
-## Authors
-
-- **Your Name** - *Initial work* - [YourUsername](https://github.com/yourusername)
-
-## Acknowledgments
-
-- Thanks to all contributors
-- Special thanks to the open-source community
-- Inspired by similar projects
-
 ## Support
 
 - [Discord Community](https://discord.gg/your-invite-link)
@@ -198,4 +187,10 @@ We use [SemVer](http://semver.org/) for versioning. For available versions, see 
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Thanks to all contributors
+- Special thanks to the open-source community
+- Inspired by similar projects 
