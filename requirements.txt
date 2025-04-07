@@ -1,0 +1,36 @@
+# Core dependencies
+PyQt6>=6.4.0
+moviepy>=1.0.3
+Pillow>=9.0.0
+
+# Build dependencies
+pyinstaller>=5.0.0
+
+# Development dependencies
+pytest>=7.0.0
+black>=22.0.0
+flake8>=4.0.0
+
+certifi==2025.1.31
+charset-normalizer==3.4.1
+decorator==4.4.2
+docutils==0.21.2
+editor==1.6.6
+filetype==1.2.0
+idna==3.10
+imageio==2.37.0
+imageio-ffmpeg==0.6.0
+Kivy==2.3.1
+Kivy-Garden==0.1.5
+proglog==0.1.11
+Pygments==2.19.1
+PySide6==6.9.0
+PySide6_Addons==6.9.0
+PySide6_Essentials==6.9.0
+python-dotenv==1.1.0
+requests==2.32.3
+runs==1.2.2
+shiboken6==6.9.0
+tqdm==4.67.1
+urllib3==2.3.0
+xmod==1.8.1

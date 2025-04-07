@@ -1,0 +1,121 @@
+name: Build and Release
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+
+    - name: Create and activate virtual environment
+      run: |
+        python -m venv .venv
+        .venv\Scripts\activate
+        python -m pip install --upgrade pip
+
+    - name: Install dependencies
+      run: |
+        .venv\Scripts\activate
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Build Windows executable
+      run: |
+        .venv\Scripts\activate
+        python build.py
+      env:
+        BUILD_PLATFORM: windows
+
+    - name: Upload Windows artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-build
+        path: dist/*.exe
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+        brew install create-dmg
+
+    - name: Build macOS application
+      run: python build.py
+      env:
+        BUILD_PLATFORM: macos
+
+    - name: Upload macOS artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: macos-build
+        path: dist/*.{app,dmg}
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Build Linux application
+      run: python build.py
+      env:
+        BUILD_PLATFORM: linux
+
+    - name: Upload Linux artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: linux-build
+        path: dist/*
+
+  release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          artifacts/windows-build/*.exe
+          artifacts/macos-build/*.{app,dmg}
+          artifacts/linux-build/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
