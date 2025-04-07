@@ -1,6 +1,6 @@
-# Stellar - Video Merger UI
+# Stellar
 
-A modern, user-friendly application for merging video files with a beautiful UI.
+Stellar یک برنامه دسکتاپ برای ادغام ویدیوها و تصاویر است که با PySide6 ساخته شده است.
 
 ## Features
 
@@ -13,7 +13,7 @@ A modern, user-friendly application for merging video files with a beautiful UI.
 
 ## Prerequisites
 
-- Python 3.9 or higher (any compatible version)
+- Python
 - pip (Python package manager)
 
 ## Installation
@@ -158,7 +158,7 @@ Supported Python paths:
 
 If you encounter any issues:
 1. Check the [Troubleshooting Guide](docs/troubleshooting.md)
-2. Search existing [issues](https://github.com/yourusername/VideoMergerUI/issues)
+2. Search existing [issues](https://github.com/yourusername/Stellar/issues)
 3. Create a new issue with detailed information
 
 ## Contributing
@@ -178,7 +178,7 @@ We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING
 
 ## Versioning
 
-We use [SemVer](http://semver.org/) for versioning. For available versions, see the [tags](https://github.com/yourusername/VideoMergerUI/tags).
+We use [SemVer](http://semver.org/) for versioning. For available versions, see the [tags](https://github.com/yourusername/Stellar/tags).
 
 ## Authors
 
@@ -193,7 +193,7 @@ We use [SemVer](http://semver.org/) for versioning. For available versions, see 
 ## Support
 
 - [Discord Community](https://discord.gg/your-invite-link)
-- [GitHub Issues](https://github.com/yourusername/VideoMergerUI/issues)
+- [GitHub Issues](https://github.com/yourusername/Stellar/issues)
 - Email: your.email@example.com
 
 ## License

@@ -24,7 +24,7 @@ from moviepy.editor import ImageClip, VideoFileClip, concatenate_videoclips, Col
 class Settings:
     def __init__(self):
         # استفاده از QSettings برای ذخیره تنظیمات در بین اجراهای برنامه
-        self.qsettings = QSettings("VideoMerger", "FolderVideoMerger")
+        self.qsettings = QSettings("Stellar", "FolderVideoMerger")
 
         # تنظیمات پیش‌فرض
         self.default_settings = {
