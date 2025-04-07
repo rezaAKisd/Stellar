@@ -21,37 +21,57 @@ wheels/
 *.egg
 
 # Virtual Environment
-.venv/
-.env/
+.env
 .venv
 env/
 venv/
 ENV/
-env.bak/
-venv.bak/
 
-# IDE
+# IDE - PyCharm/IntelliJ
 .idea/
-.vscode/
-*.swp
-*.swo
-.DS_Store
+*.iml
+*.iws
+*.ipr
+.idea_modules/
 
-# Build artifacts
-*.spec
-*.log
+# IDE - VSCode
+.vscode/
+*.code-workspace
+.history/
+
+# IDE - Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Build files
 *.exe
 *.app/
 *.dmg
 *.zip
 *.tar.gz
+*.spec
 
-# Project specific
-build_env/
+# Media files
 *.mp4
 *.avi
 *.mov
 *.wmv
 *.flv
 *.mkv
-*.webm 
+
+# Logs and databases
+*.log
+*.sqlite
+*.db
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+build_env/ 
