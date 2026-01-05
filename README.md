@@ -1,196 +1,267 @@
-# Stellar
+# MyHighlights - Instagram Highlight Downloader
 
-[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)]()
+A polished desktop application for downloading and managing Instagram highlights, built with Python, QtPy, and aiograpi.
 
-Stellar is a desktop application for merging videos and images, built with PySide6.
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+![Qt](https://img.shields.io/badge/Qt-PySide6-green.svg)
+![Instagram](https://img.shields.io/badge/Instagram-aiograpi-purple.svg)
 
-## Quick Start
+## ✨ Features
 
+- **Real Instagram Authentication** - Login with username, password, and 2FA support
+- **Highlight Download** - Download Instagram highlights by pasting the link
+- **Pause/Resume** - Control downloads with pause/resume functionality
+- **Video Export** - Merge downloaded items into a single video file
+- **Progress Tracking** - Real-time progress bars for downloads and exports
+- **Session Persistence** - Save your login session for future use
+- **Clean UI** - Modern, polished interface matching the wireframe design
+
+## 📸 Screenshots
+
+See the wireframe screenshots in the `Desktop/Screenshot...` files for the exact UI design.
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.11 or higher
+- PySide6 (or PyQt6)
+- aiograpi
+- moviepy
+- qasync
+
+### Installation
+
+1. **Clone or navigate to the project directory**:
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/Stellar.git
-cd Stellar
-
-# Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Run the application
-python main.py
+cd /Users/rezaakbari/PycharmProjects/Stellar
 ```
 
-## Features
-
-- Merge multiple video files into one
-- Beautiful and intuitive user interface
-- Support for various video formats
-- Cross-platform compatibility (Windows, macOS, Linux)
-- Automated builds and releases
-- System-specific Python version support
-
-## Prerequisites
-
-- Python 3.9 or higher
-- pip (Python package manager)
-
-## Installation
-
-### Windows
-
+2. **Install dependencies**:
 ```bash
-# Create a virtual environment
-python -m venv .venv
-
-# Activate the virtual environment
-.venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
+pip install qtpy pyside6 aiograpi moviepy qasync pillow requests
 ```
 
-### macOS/Linux
-
+Or use the requirements file:
 ```bash
-# Create a virtual environment
-python3 -m venv .venv
-
-# Activate the virtual environment
-source .venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
 ```
-
-## Usage
 
 ### Running the Application
 
 ```bash
-# Activate the virtual environment (if not already activated)
-# Windows
-.venv\Scripts\activate
-# macOS/Linux
-source .venv/bin/activate
-
-# Run the application
 python main.py
 ```
 
-### Building Executables
+## 📖 User Guide
 
-The project includes a build script that can create platform-specific executables. The script will automatically:
-1. Find a compatible Python installation (3.9 or higher)
-2. Create a clean virtual environment
-3. Install all required dependencies
-4. Build the executable for the specified platform
-5. Clean up temporary files
+### 1. Login to Instagram
 
-#### Local Build
+1. Enter your Instagram **username**
+2. Enter your **password**
+3. **Optional**: If you have 2FA enabled, enter the **6-digit code** (leave empty otherwise)
+4. Click **"Log In"**
 
-```bash
-# For Windows
-export BUILD_PLATFORM=windows
-python build.py
+Your session will be saved securely, so you won't need to log in again.
 
-# For macOS
-export BUILD_PLATFORM=macos
-python build.py
+**Note**: The 2FA code field is optional. Only enter a code if Instagram requires it for your account.
 
-# For Linux
-export BUILD_PLATFORM=linux
-python build.py
+### 2. Download a Highlight
+
+1. Go to Instagram and navigate to a highlight
+2. Copy the highlight URL (should look like: `https://www.instagram.com/stories/highlights/...`)
+3. Paste the URL in the input field
+4. Click **"Add & Download"**
+
+The download will start automatically!
+
+### 3. Working with Jobs
+
+Each highlight becomes a "job" with the following states:
+
+- **Downloading** - Currently downloading items (you can pause)
+- **Paused** - Download paused (click to resume)
+- **Downloaded** - All items downloaded (ready to build video)
+- **Building** - Video is being created (you can cancel)
+- **Exported** - Video successfully created
+
+### 4. Build a Video
+
+1. Wait for download to complete
+2. Click **"Build Video"**
+3. Wait for the export to finish
+4. Click **"View Output"** to see your video
+
+### 5. Managing Downloads
+
+- **Pause** - Pause an ongoing download
+- **View Downloads** - Open the downloads folder
+- **Build Video** - Create a merged video from downloaded items
+- **Cancel** - Cancel video building
+- **View Output** - Open the exports folder
+- **📁** - Open the project folder
+- **🗑** - Delete the job (files remain)
+
+## 📁 Folder Structure
+
+Downloaded content is organized as follows:
+
+```
+data/
+├── Highlights/
+│   └── <Highlight_Name>/
+│       ├── downloads/     # Original media files
+│       └── exports/       # Merged video files
+└── .session/
+    └── instagram_session.json  # Saved login session
 ```
 
-#### Automated Builds (CI/CD)
+## 🏗️ Architecture
 
-The project uses GitHub Actions for automated builds. When you push to the master branch:
-1. Three parallel jobs run to build for Windows, macOS, and Linux
-2. Each job uses the system Python on the respective platform
-3. A new release is created with all platform builds
+### Project Structure
 
-To test the CI/CD workflow locally:
-```bash
-# Install act (GitHub Actions local runner)
-brew install act
-
-# List available jobs
-act -l
-
-# Run all jobs
-act
+```
+myhighlights/
+├── models/              # Data models (Job, Auth)
+├── services/            # Business logic
+│   ├── instagram.py     # Instagram API (aiograpi)
+│   ├── downloader.py    # Download manager
+│   └── video_builder.py # Video composition (moviepy)
+├── core/                # Application core
+│   ├── state.py         # State management
+│   └── config.py        # Configuration
+└── ui/                  # User interface
+    ├── main_window.py   # Main application window
+    ├── widgets/         # UI components
+    │   ├── header.py    # Login header
+    │   ├── job_card.py  # Highlight job card
+    │   └── toast.py     # Toast notifications
+    └── styles.qss       # Stylesheet
 ```
 
-## Configuration
+### Key Technologies
 
-### Default Settings
+- **QtPy** - Cross-platform Qt bindings
+- **aiograpi** - Instagram API client
+- **moviepy** - Video editing library
+- **qasync** - Async/await support for Qt
 
-- Output format: MP4
-- Video codec: H.264
-- Audio codec: AAC
-- Resolution: Same as first input video
-- Frame rate: Same as first input video
+## ⚙️ Configuration
 
-### Supported Platforms
+Default settings in `myhighlights/core/config.py`:
 
-- Windows 10/11 (64-bit)
-- macOS 10.15 or later
-- Linux (Ubuntu 20.04 or later)
+- **Image duration**: 3 seconds per image in video
+- **Video resolution**: 1080x1920 (Instagram story format)
+- **FPS**: 30 frames per second
+- **Toast duration**: 3 seconds
 
-## Troubleshooting
+## 🔒 Security & Privacy
 
-### Common Issues
+- **Session Storage**: Login sessions are saved in `data/.session/instagram_session.json`
+- **No Password Storage**: Only session tokens are stored, never your password
+- **Local Processing**: All downloads and video processing happen locally
+- **Instagram TOS**: Only use this app for content you have rights to download
 
-1. **Python Version Issues**
-   - Ensure you have Python 3.9 or higher installed
-   - The build script will automatically find a compatible version
-   - Check available Python versions: `python --version`
+## 🐛 Troubleshooting
 
-2. **Missing Dependencies**
-   - Ensure all requirements are installed: `pip install -r requirements.txt`
-   - The build script will handle dependency installation
+### "aiograpi not installed"
 
-3. **Build Issues**
-   - Clean up previous builds: Delete `dist/` and `build/` directories
-   - Ensure virtual environment is activated
-   - Check BUILD_PLATFORM environment variable is set correctly
+```bash
+pip install aiograpi
+```
 
-4. **Video Processing Issues**
-   - Verify input video formats are supported
-   - Check available disk space
-   - Ensure sufficient system memory
+### "moviepy not installed"
 
-## Contributing
+```bash
+pip install moviepy
+```
 
-We welcome contributions! Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on:
-- Code style
-- Pull request process
-- Development workflow
+### Login fails with "2FA Required"
 
-### Development Setup
+Enter your 6-digit 2FA code in the "2FA Code" field before clicking "Log In".
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests: `python -m pytest`
-5. Submit a pull request
+### "Challenge required" error
 
-## Support
+Instagram requires you to verify your account through their website. Open Instagram in a browser, complete the challenge, then try logging in again.
 
-- [Discord Community](https://discord.gg/your-invite-link)
-- [GitHub Issues](https://github.com/yourusername/Stellar/issues)
-- Email: your.email@example.com
+### Downloads fail
 
-## License
+Make sure you're logged in and have a stable internet connection. Instagram may rate-limit downloads if you download too many items too quickly.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### Video build fails
 
-## Acknowledgments
+Ensure you have `ffmpeg` installed on your system:
 
-- Thanks to all contributors
-- Special thanks to the open-source community
-- Inspired by similar projects 
+**macOS**:
+```bash
+brew install ffmpeg
+```
+
+**Linux**:
+```bash
+sudo apt-get install ffmpeg
+```
+
+**Windows**:
+Download from https://ffmpeg.org/download.html
+
+## 🎨 Customization
+
+### Modify the Theme
+
+Edit `myhighlights/ui/styles.qss` to customize colors, fonts, and styles.
+
+### Change Video Settings
+
+Edit `myhighlights/core/config.py`:
+
+```python
+DEFAULT_IMAGE_DURATION = 5  # 5 seconds per image
+DEFAULT_VIDEO_RESOLUTION = (1080, 1080)  # Square format
+DEFAULT_FPS = 60  # 60 FPS
+```
+
+## 📝 Development
+
+### Running Tests
+
+```bash
+python -m pytest tests/
+```
+
+### Code Style
+
+```bash
+black myhighlights/
+flake8 myhighlights/
+```
+
+### Building Executable
+
+```bash
+pyinstaller --name MyHighlights --windowed main.py
+```
+
+## 🤝 Contributing
+
+This is a personal project, but feel free to fork and customize for your own use.
+
+## ⚠️ Disclaimer
+
+This tool is for personal use only. Make sure you have the rights to download any content you access through Instagram. Always respect content creators' rights and Instagram's Terms of Service.
+
+## 📜 License
+
+Educational/Personal use only.
+
+## 🙏 Acknowledgments
+
+- **aiograpi** - Excellent Instagram API client
+- **moviepy** - Powerful video editing library
+- **Qt** - Cross-platform UI framework
+
+---
+
+**Built with** ❤️ **using Python + Qt**
+
+For questions or issues, please check the troubleshooting section above.

@@ -1,0 +1,537 @@
+/* MyHighlights - Wireframe-matched stylesheet */
+
+/* Global */
+* {
+    font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    font-size: 13px;
+}
+
+QLabel {
+    color: #c3c9d2;
+}
+
+QMainWindow {
+    background-color: #0f1115;
+}
+
+/* Login Header */
+#login-header {
+    background-color: #151922;
+    border-bottom: 1px solid #242a33;
+}
+
+#brand {
+    font-size: 20px;
+    font-weight: 700;
+    color: #e6e9ef;
+}
+
+#field-label {
+    font-size: 12px;
+    color: #9aa3ad;
+    font-weight: 500;
+}
+
+#login-input {
+    border: 1px solid #2a313c;
+    border-radius: 6px;
+    padding: 6px 10px;
+    background: #0f1319;
+    color: #e6e9ef;
+}
+
+#login-input:focus {
+    border: 1px solid #2f81f7;
+}
+
+#login-input:disabled {
+    color: #6f7a86;
+    background: #10141a;
+    border: 1px solid #222833;
+}
+
+#login-btn {
+    background-color: #2f81f7;
+    color: #eef5ff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 20px;
+    font-weight: 600;
+}
+
+#login-btn:hover {
+    background-color: #3a8bff;
+}
+
+#login-btn:pressed {
+    background-color: #2366d1;
+}
+
+#logout-btn {
+    background-color: #2a2f3a;
+    color: #d6dbe3;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 500;
+}
+
+#logout-btn:hover {
+    background-color: #333a47;
+}
+
+#status-label {
+    font-size: 12px;
+    color: #7f8896;
+    padding: 4px 8px;
+}
+
+#status-label[logged_in="true"] {
+    color: #6bd38f;
+}
+
+#session-message {
+    font-size: 12px;
+    color: #7f8896;
+}
+
+/* Tabs */
+QTabWidget::pane {
+    border: none;
+    background: transparent;
+}
+
+QTabBar::tab {
+    background: transparent;
+    color: #7f8896;
+    padding: 12px 24px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+QTabBar::tab:selected {
+    color: #e6e9ef;
+    border-bottom: 2px solid #2f81f7;
+}
+
+QTabBar::tab:hover:!selected {
+    color: #b3bcc7;
+}
+
+/* Input Card */
+#input-card {
+    background: #151922;
+    border: 1px solid #242a33;
+    border-radius: 12px;
+    padding: 0;
+}
+
+#link-input {
+    border: 1px solid #2a313c;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 14px;
+    background: #0f1319;
+    color: #e6e9ef;
+}
+
+#link-input:focus {
+    border: 1px solid #2f81f7;
+    background: #0f1319;
+}
+
+#add-download-btn {
+    background-color: #2f81f7;
+    color: #eef5ff;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 14px;
+    min-width: 150px;
+}
+
+#add-download-btn:hover {
+    background-color: #3a8bff;
+}
+
+#add-download-btn:pressed {
+    background-color: #2366d1;
+}
+
+#help-text {
+    font-size: 12px;
+    color: #7f8896;
+}
+
+/* Section Header */
+#section-header {
+    font-size: 18px;
+    font-weight: 700;
+    color: #e6e9ef;
+    padding: 0 0 10px 0;
+}
+
+/* Jobs Scroll Area */
+#jobs-scroll {
+    background: transparent;
+    border: none;
+}
+
+QScrollBar:vertical {
+    background: transparent;
+    width: 8px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background: #2a313c;
+    border-radius: 4px;
+    min-height: 20px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #394251;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0;
+}
+
+/* Job Card */
+#job-card {
+    background: #151922;
+    border: 1px solid #242a33;
+    border-radius: 12px;
+}
+
+#job-cover {
+    background: #1c202a;
+    border-radius: 8px;
+    color: #9aa3ad;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+#job-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #e6e9ef;
+}
+
+#job-info {
+    font-size: 12px;
+    color: #9aa3ad;
+}
+
+#job-progress {
+    border-radius: 3px;
+    background: #1d232c;
+}
+
+#job-progress::chunk {
+    background: #2f81f7;
+    border-radius: 3px;
+}
+
+#progress-text {
+    font-size: 11px;
+    color: #7f8896;
+}
+
+/* Status Badge */
+#status-badge {
+    background: #1e232c;
+    color: #9aa3ad;
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+#status-badge[status="downloading"] {
+    background: #10243b;
+    color: #6fb6ff;
+}
+
+#status-badge[status="paused"] {
+    background: #2a1f12;
+    color: #f2b75e;
+}
+
+#status-badge[status="downloaded"] {
+    background: #12261a;
+    color: #6bd38f;
+}
+
+#status-badge[status="building"] {
+    background: #2a1f12;
+    color: #f2b75e;
+}
+
+#status-badge[status="exported"] {
+    background: #211530;
+    color: #c08bff;
+}
+
+#status-badge[status="error"] {
+    background: #32151a;
+    color: #ff7b7b;
+}
+
+/* Action Buttons */
+#action-btn {
+    background: #202632;
+    color: #d6dbe3;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 500;
+}
+
+#action-btn:hover {
+    background: #2a313f;
+}
+
+#build-btn, #view-output-btn {
+    background: #2f81f7;
+    color: #eef5ff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 600;
+}
+
+#build-btn:hover, #view-output-btn:hover {
+    background: #3a8bff;
+}
+
+#icon-btn {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    color: #c3c9d2;
+}
+
+#icon-btn:hover {
+    background: #1d232c;
+    border-radius: 4px;
+}
+
+/* Empty State */
+#empty-state {
+    padding: 60px;
+}
+
+#empty-icon {
+    font-size: 48px;
+}
+
+#empty-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #e6e9ef;
+}
+
+#empty-message {
+    font-size: 14px;
+    color: #9aa3ad;
+}
+
+/* Toast Notifications */
+#toast-container {
+    background: transparent;
+}
+
+#toast {
+    background: #1a1a1a;
+    color: white;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+#toast[type="success"] {
+    background: #4caf50;
+}
+
+#toast[type="error"] {
+    background: #f44336;
+}
+
+#toast[type="info"] {
+    background: #1a1a1a;
+}
+
+/* Highlight Card (By Username Tab) */
+#highlight-card {
+    background: #151922;
+    border: 1px solid #242a33;
+    border-radius: 12px;
+}
+
+#highlight-cover {
+    background: #1c202a;
+    border-radius: 8px;
+    color: #9aa3ad;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+#highlight-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e6e9ef;
+}
+
+#highlight-count {
+    font-size: 12px;
+    color: #9aa3ad;
+}
+
+#highlight-status {
+    font-size: 12px;
+    color: #7f8896;
+}
+
+#highlight-download-btn {
+    background-color: #2f81f7;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-weight: 500;
+}
+
+#highlight-download-btn:hover {
+    background-color: #1e6dd8;
+}
+
+#highlight-download-btn:pressed {
+    background-color: #0d5fc7;
+}
+
+/* Progress Card */
+#progress-card {
+    background: transparent;
+    border: none;
+}
+
+#progress-stage {
+    font-size: 12px;
+    font-weight: 600;
+    color: #e6e9ef;
+}
+
+#progress-stats {
+    font-size: 11px;
+    color: #9aa3ad;
+}
+
+#progress-speed, #progress-eta {
+    font-size: 11px;
+    color: #9aa3ad;
+}
+
+#download-progress, #build-progress {
+    border-radius: 3px;
+    background: #1d232c;
+    height: 6px;
+}
+
+#download-progress::chunk, #build-progress::chunk {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 #2f81f7, stop:1 #1e6dd8);
+    border-radius: 3px;
+}
+
+#progress-cancel-btn {
+    background: transparent;
+    color: #9aa3ad;
+    border: 1px solid #2a313c;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+#progress-cancel-btn:hover {
+    background: #1d232c;
+    color: #d6dbe3;
+    border: 1px solid #394251;
+}
+
+/* Loading Spinner */
+#loading-spinner {
+    background: transparent;
+}
+
+#spinner-label {
+    font-size: 12px;
+    color: #9aa3ad;
+}
+
+/* Error Banner */
+#error-banner {
+    background: #2a1618;
+    border: 1px solid #4a2226;
+    border-radius: 8px;
+}
+
+#error-icon {
+    font-size: 16px;
+    color: #ff7b7b;
+}
+
+#error-message {
+    font-size: 12px;
+    color: #ffb3b3;
+}
+
+#error-retry-btn {
+    background: transparent;
+    color: #ff7b7b;
+    border: 1px solid #4a2226;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+#error-retry-btn:hover {
+    background: #3a1d1f;
+    color: #ffb3b3;
+    border: 1px solid #5a2a2e;
+}
+
+#error-dismiss-btn {
+    background: transparent;
+    color: #9aa3ad;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 11px;
+}
+
+#error-dismiss-btn:hover {
+    background: #3a1d1f;
+    color: #d6dbe3;
+}
+
+/* Disabled button states */
+#add-download-btn:disabled,
+#login-btn:disabled,
+#build-btn:disabled,
+#action-btn:disabled {
+    background: #1a1f28;
+    color: #6f7a86;
+    border: 1px solid #222833;
+}
+
+#highlight-download-btn:disabled {
+    background: #1a1f28;
+    color: #6f7a86;
+}
