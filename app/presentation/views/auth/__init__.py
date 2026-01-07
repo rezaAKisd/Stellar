@@ -1,1 +1,0 @@
-"""Authentication views module"""

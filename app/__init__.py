@@ -1,1 +1,0 @@
-# Highlight Studio Application
