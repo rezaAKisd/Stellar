@@ -1,250 +1,327 @@
-# MyHighlights - Instagram Highlight Downloader
+# Stellar - Instagram Highlight Downloader
 
-A polished desktop application for downloading and managing Instagram highlights, built with Python, QtPy, and aiograpi.
+Modern client-server application for downloading and managing Instagram highlights with real-time progress updates.
 
-![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
-![Qt](https://img.shields.io/badge/Qt-PySide6-green.svg)
-![Instagram](https://img.shields.io/badge/Instagram-aiograpi-purple.svg)
+![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)
+![React](https://img.shields.io/badge/React-18-blue.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue.svg)
+
+## 🏗️ Architecture
+
+**Backend**: Python FastAPI server with Clean Architecture
+**Frontend**: React.js SPA with TypeScript
+**Communication**: REST API + WebSocket for real-time updates
 
 ## ✨ Features
 
-- **Real Instagram Authentication** - Login with username, password, and 2FA support
-- **Highlight Download** - Download Instagram highlights by pasting the link
-- **Pause/Resume** - Control downloads with pause/resume functionality
-- **Video Export** - Merge downloaded items into a single video file
-- **Progress Tracking** - Real-time progress bars for downloads and exports
-- **Session Persistence** - Save your login session for future use
-- **Clean UI** - Modern, polished interface matching the wireframe design
+### Completed (Phases 1-5)
 
-## 📸 Screenshots
+✅ **Backend API** (FastAPI)
+- Authentication with JWT tokens
+- Instagram login with 2FA support
+- Link-based highlight management (add, download, build video)
+- Username-based user tracking (add, load highlights, download)
+- Background tasks for long operations
+- Real-time WebSocket progress updates
+- Static file serving for media
 
-See the wireframe screenshots in the `Desktop/Screenshot...` files for the exact UI design.
+✅ **Frontend Foundation** (React.js)
+- Project structure with TypeScript
+- API client with Axios interceptors
+- Context providers (Auth, Toast, WebSocket)
+- Custom hooks for easy state access
+- Basic routing setup
+- Global styles with design system
+
+### In Progress
+
+🚧 **Phase 6-7**: Frontend UI components and pages
+- Sign in and 2FA pages
+- Dashboard with tabs
+- Highlight and user management UI
+- Real-time progress indicators
+
+### Upcoming
+
+⏳ **Phase 8**: Real-time updates integration
+⏳ **Phase 9**: Styling and polish
+⏳ **Phase 10**: Testing and error handling
+⏳ **Phase 11**: Deployment and DevOps
+
+## 📁 Project Structure
+
+```
+Stellar/
+├── backend/                 # Python FastAPI backend
+│   ├── api/                # API layer (routes, websockets, schemas)
+│   │   ├── routes/         # REST endpoints
+│   │   ├── websockets/     # WebSocket handlers
+│   │   ├── dependencies.py # FastAPI dependencies
+│   │   └── schemas.py      # Pydantic models
+│   ├── app/                # Application layer
+│   │   ├── domain/        # Business entities
+│   │   ├── application/   # Use cases
+│   │   └── infrastructure/ # External services
+│   ├── core/               # Core config
+│   │   ├── config.py      # Settings
+│   │   ├── security.py    # JWT auth
+│   │   └── middleware.py  # CORS, etc.
+│   ├── main.py             # FastAPI entry point
+│   └── requirements.txt    # Backend dependencies
+├── frontend/               # React.js frontend
+│   ├── src/
+│   │   ├── api/           # API client layer
+│   │   ├── components/    # React components
+│   │   ├── context/       # Context providers
+│   │   ├── hooks/         # Custom hooks
+│   │   ├── pages/         # Page components
+│   │   ├── types/         # TypeScript types
+│   │   └── utils/         # Utilities
+│   ├── public/
+│   └── package.json
+└── data/                   # Data directory (downloads, exports)
+```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.11 or higher
-- PySide6 (or PyQt6)
-- aiograpi
-- moviepy
-- qasync
+- Python 3.10+
+- Node.js 16+ and npm
+- Instagram account (for authentication)
 
-### Installation
+### Backend Setup
 
-1. **Clone or navigate to the project directory**:
+1. Install Python dependencies:
 ```bash
-cd /Users/rezaakbari/PycharmProjects/Stellar
-```
-
-2. **Install dependencies**:
-```bash
-pip install qtpy pyside6 aiograpi moviepy qasync pillow requests
-```
-
-Or use the requirements file:
-```bash
+cd backend
 pip install -r requirements.txt
 ```
 
-### Running the Application
+2. Create `.env` file in `backend/`:
+```env
+SECRET_KEY=your-secret-key-change-in-production
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=1440
+CORS_ORIGINS=http://localhost:3000
+```
+
+3. Run the backend server:
+```bash
+uvicorn main:app --reload --port 8000
+```
+
+Backend will run at **http://localhost:8000**
+
+API docs available at **http://localhost:8000/docs**
+
+### Frontend Setup
+
+1. Install Node dependencies:
+```bash
+cd frontend
+npm install
+```
+
+2. Create `.env` file in `frontend/`:
+```env
+REACT_APP_API_URL=http://localhost:8000
+REACT_APP_WS_URL=ws://localhost:8000
+REACT_APP_API_PREFIX=/api/v1
+```
+
+3. Run the frontend dev server:
+```bash
+npm start
+```
+
+Frontend will open at **http://localhost:3000**
+
+### Run Both Servers (Recommended)
 
 ```bash
-python main.py
+# Install concurrently globally
+npm install -g concurrently
+
+# From project root
+concurrently "cd backend && uvicorn main:app --reload" "cd frontend && npm start"
 ```
 
-## 📖 User Guide
+## 📡 API Endpoints
 
-### 1. Login to Instagram
+### Authentication
+- `POST /api/v1/auth/login` - Login with Instagram credentials
+- `POST /api/v1/auth/verify-2fa` - Verify 2FA code
+- `POST /api/v1/auth/logout` - Logout current session
+- `GET /api/v1/auth/me` - Get current user info
+- `POST /api/v1/auth/restore-session` - Restore Instagram session
 
-1. Enter your Instagram **username**
-2. Enter your **password**
-3. **Optional**: If you have 2FA enabled, enter the **6-digit code** (leave empty otherwise)
-4. Click **"Log In"**
+### Highlights (Link-based)
+- `POST /api/v1/highlights/add-link` - Add highlight by URL
+- `GET /api/v1/highlights/projects` - Get all projects
+- `GET /api/v1/highlights/{project_id}/status` - Get project status
+- `POST /api/v1/highlights/{project_id}/download` - Start download
+- `POST /api/v1/highlights/{project_id}/build-video` - Build video
+- `DELETE /api/v1/highlights/{project_id}` - Delete project
 
-Your session will be saved securely, so you won't need to log in again.
+### Users (Username-based)
+- `POST /api/v1/users/add` - Add user to track
+- `GET /api/v1/users` - Get all tracked users
+- `GET /api/v1/users/{username}/highlights` - Load user highlights
+- `POST /api/v1/users/{username}/highlights/{highlight_id}/download` - Download highlight
+- `DELETE /api/v1/users/{user_id}` - Delete user
 
-**Note**: The 2FA code field is optional. Only enter a code if Instagram requires it for your account.
+### WebSocket
+- `WS /ws/progress?token=<jwt_token>` - Real-time progress updates
 
-### 2. Download a Highlight
+## 🧪 Testing
 
-1. Go to Instagram and navigate to a highlight
-2. Copy the highlight URL (should look like: `https://www.instagram.com/stories/highlights/...`)
-3. Paste the URL in the input field
-4. Click **"Add & Download"**
+### Backend Testing
 
-The download will start automatically!
-
-### 3. Working with Jobs
-
-Each highlight becomes a "job" with the following states:
-
-- **Downloading** - Currently downloading items (you can pause)
-- **Paused** - Download paused (click to resume)
-- **Downloaded** - All items downloaded (ready to build video)
-- **Building** - Video is being created (you can cancel)
-- **Exported** - Video successfully created
-
-### 4. Build a Video
-
-1. Wait for download to complete
-2. Click **"Build Video"**
-3. Wait for the export to finish
-4. Click **"View Output"** to see your video
-
-### 5. Managing Downloads
-
-- **Pause** - Pause an ongoing download
-- **View Downloads** - Open the downloads folder
-- **Build Video** - Create a merged video from downloaded items
-- **Cancel** - Cancel video building
-- **View Output** - Open the exports folder
-- **📁** - Open the project folder
-- **🗑** - Delete the job (files remain)
-
-## 📁 Folder Structure
-
-Downloaded content is organized as follows:
-
+Test API endpoints using the interactive docs:
 ```
-data/
-├── Highlights/
-│   └── <Highlight_Name>/
-│       ├── downloads/     # Original media files
-│       └── exports/       # Merged video files
-└── .session/
-    └── instagram_session.json  # Saved login session
+http://localhost:8000/docs
 ```
 
-## 🏗️ Architecture
-
-### Project Structure
-
-```
-myhighlights/
-├── models/              # Data models (Job, Auth)
-├── services/            # Business logic
-│   ├── instagram.py     # Instagram API (aiograpi)
-│   ├── downloader.py    # Download manager
-│   └── video_builder.py # Video composition (moviepy)
-├── core/                # Application core
-│   ├── state.py         # State management
-│   └── config.py        # Configuration
-└── ui/                  # User interface
-    ├── main_window.py   # Main application window
-    ├── widgets/         # UI components
-    │   ├── header.py    # Login header
-    │   ├── job_card.py  # Highlight job card
-    │   └── toast.py     # Toast notifications
-    └── styles.qss       # Stylesheet
+Test WebSocket connection:
+```bash
+cd backend
+python test_websocket.py <your_jwt_token>
 ```
 
-### Key Technologies
+Get JWT token by logging in via the API first.
 
-- **QtPy** - Cross-platform Qt bindings
-- **aiograpi** - Instagram API client
-- **moviepy** - Video editing library
-- **qasync** - Async/await support for Qt
+### Frontend Testing
 
-## ⚙️ Configuration
+```bash
+cd frontend
+npm test
+```
 
-Default settings in `myhighlights/core/config.py`:
+## 🛠️ Technology Stack
 
-- **Image duration**: 3 seconds per image in video
-- **Video resolution**: 1080x1920 (Instagram story format)
-- **FPS**: 30 frames per second
-- **Toast duration**: 3 seconds
+### Backend
+- **FastAPI** - Modern Python web framework
+- **Pydantic** - Data validation
+- **python-jose** - JWT tokens
+- **aiograpi** - Instagram API
+- **moviepy** - Video processing
+- **WebSockets** - Real-time updates
 
-## 🔒 Security & Privacy
+### Frontend
+- **React 18** - UI library
+- **TypeScript** - Type safety
+- **React Router** - Routing
+- **React Query** - Server state
+- **Axios** - HTTP client
+- **Context API** - Global state
 
-- **Session Storage**: Login sessions are saved in `data/.session/instagram_session.json`
-- **No Password Storage**: Only session tokens are stored, never your password
-- **Local Processing**: All downloads and video processing happen locally
-- **Instagram TOS**: Only use this app for content you have rights to download
+## 🏛️ Architecture Principles
+
+### Clean Architecture (Backend)
+
+```
+API Layer → Application Layer → Domain Layer
+              ↓
+       Infrastructure Layer
+```
+
+- **Domain**: Pure business logic (entities, value objects)
+- **Application**: Use cases orchestrating business logic
+- **Infrastructure**: External services (Instagram, file storage)
+- **API**: HTTP endpoints and WebSocket handlers
+
+### Component-Based (Frontend)
+
+- Pages for routes
+- Reusable components
+- Custom hooks for logic
+- Context for global state
+- API client for server communication
+
+## 🔐 Security & Privacy
+
+- **JWT Authentication**: Stateless token-based auth
+- **Session Storage**: Instagram sessions saved locally
+- **No Password Storage**: Only session tokens, never passwords
+- **Local Processing**: All downloads and processing happen locally
+- **CORS**: Configured for localhost development
 
 ## 🐛 Troubleshooting
 
-### "aiograpi not installed"
+### Backend Issues
 
+**Dependencies not installed**:
 ```bash
-pip install aiograpi
+cd backend
+pip install -r requirements.txt
 ```
 
-### "moviepy not installed"
+**Instagram login fails**:
+- Check credentials
+- Enter 2FA code if required
+- Complete any Instagram challenges in browser first
 
+**MoviePy video build fails**:
+Install ffmpeg:
+- macOS: `brew install ffmpeg`
+- Linux: `sudo apt-get install ffmpeg`
+- Windows: Download from https://ffmpeg.org/download.html
+
+### Frontend Issues
+
+**Dependencies not installed**:
 ```bash
-pip install moviepy
+cd frontend
+npm install
 ```
 
-### Login fails with "2FA Required"
+**Cannot connect to backend**:
+- Ensure backend is running on port 8000
+- Check CORS settings in backend
+- Verify `.env` file has correct API URL
 
-Enter your 6-digit 2FA code in the "2FA Code" field before clicking "Log In".
-
-### "Challenge required" error
-
-Instagram requires you to verify your account through their website. Open Instagram in a browser, complete the challenge, then try logging in again.
-
-### Downloads fail
-
-Make sure you're logged in and have a stable internet connection. Instagram may rate-limit downloads if you download too many items too quickly.
-
-### Video build fails
-
-Ensure you have `ffmpeg` installed on your system:
-
-**macOS**:
-```bash
-brew install ffmpeg
-```
-
-**Linux**:
-```bash
-sudo apt-get install ffmpeg
-```
-
-**Windows**:
-Download from https://ffmpeg.org/download.html
-
-## 🎨 Customization
-
-### Modify the Theme
-
-Edit `myhighlights/ui/styles.qss` to customize colors, fonts, and styles.
-
-### Change Video Settings
-
-Edit `myhighlights/core/config.py`:
-
-```python
-DEFAULT_IMAGE_DURATION = 5  # 5 seconds per image
-DEFAULT_VIDEO_RESOLUTION = (1080, 1080)  # Square format
-DEFAULT_FPS = 60  # 60 FPS
-```
+**WebSocket connection fails**:
+- Ensure you're logged in (have JWT token)
+- Check WebSocket URL in `.env`
+- Backend should be running
 
 ## 📝 Development
 
-### Running Tests
-
-```bash
-python -m pytest tests/
-```
-
 ### Code Style
 
-```bash
-black myhighlights/
-flake8 myhighlights/
-```
+**Backend**: PEP 8, type hints
+**Frontend**: ESLint, Prettier (to be configured)
 
-### Building Executable
+### Git Workflow
 
-```bash
-pyinstaller --name MyHighlights --windowed main.py
-```
+- `main` - Production-ready code
+- `dev` - Development branch (current)
+- Feature branches - New features
+
+## 📖 Documentation
+
+- **Backend README**: `backend/README.md` (to be created)
+- **Frontend README**: `frontend/README.md` (created)
+- **API Docs**: http://localhost:8000/docs (auto-generated)
+
+## 🗺️ Migration Plan
+
+This project was migrated from a PyQt desktop application to a modern client-server architecture. See the migration plan in `.claude/plans/` for detailed implementation phases.
+
+**Completed Phases**:
+- Phase 1: Backend Foundation
+- Phase 2: Authentication API
+- Phase 3: Core API Endpoints
+- Phase 4: WebSocket Real-time Updates
+- Phase 5: Frontend Setup
+
+**Next Phase**: Phase 6 - Frontend Authentication UI
 
 ## 🤝 Contributing
 
-This is a personal project, but feel free to fork and customize for your own use.
+This is a private project. For issues or questions, contact the maintainer.
 
 ## ⚠️ Disclaimer
 
@@ -252,16 +329,17 @@ This tool is for personal use only. Make sure you have the rights to download an
 
 ## 📜 License
 
-Educational/Personal use only.
+Private project - Educational/Personal use only
 
 ## 🙏 Acknowledgments
 
 - **aiograpi** - Excellent Instagram API client
 - **moviepy** - Powerful video editing library
-- **Qt** - Cross-platform UI framework
+- **FastAPI** - Modern Python web framework
+- **React** - UI library
 
 ---
 
-**Built with** ❤️ **using Python + Qt**
+**Built with** ❤️ **using Python + FastAPI + React.js**
 
 For questions or issues, please check the troubleshooting section above.
