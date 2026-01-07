@@ -6,7 +6,7 @@ from dataclasses import replace
 from .models_ui import (
     AppUiState, ConnectionState, HighlightRowState, UserRowState,
     UserDetailState, UserHighlightCardState, ToastMessage,
-    ViewMode, StatusType
+    ViewMode, StatusType, AuthScreen, AuthState, SignInState, TwoFactorState
 )
 from ..domain.entities import HighlightProject
 from ..application.dtos import HighlightProjectDTO, UserHighlightDTO
@@ -18,6 +18,7 @@ class AppStore(QObject):
     # Signals
     state_changed = Signal()
     toast_added = Signal(str, str)  # message, type
+    auth_changed = Signal()  # Emitted when auth state changes
 
     def __init__(self):
         super().__init__()
@@ -137,6 +138,63 @@ class AppStore(QObject):
     def show_toast(self, message: str, toast_type: str = "info"):
         """Show a toast notification"""
         self.toast_added.emit(message, toast_type)
+
+    def set_auth_screen(self, screen: AuthScreen):
+        """Set current authentication screen"""
+        self._state.auth.current_screen = screen
+        self.auth_changed.emit()
+        self.state_changed.emit()
+
+    def set_sign_in_loading(self, is_loading: bool):
+        """Set loading state for sign-in screen"""
+        self._state.auth.sign_in.is_loading = is_loading
+        self.state_changed.emit()
+
+    def set_sign_in_error(self, error: Optional[str]):
+        """Set error message for sign-in screen"""
+        self._state.auth.sign_in.error_message = error
+        self.state_changed.emit()
+
+    def set_2fa_loading(self, is_loading: bool):
+        """Set loading state for 2FA screen"""
+        self._state.auth.two_factor.is_loading = is_loading
+        self.state_changed.emit()
+
+    def set_2fa_error(self, error: Optional[str]):
+        """Set error message for 2FA screen"""
+        self._state.auth.two_factor.error_message = error
+        self.state_changed.emit()
+
+    def store_2fa_credentials(self, username: str, password: str):
+        """Store credentials temporarily for 2FA verification"""
+        self._state.auth.two_factor.username = username
+        self._state.auth.two_factor.password = password
+        self.state_changed.emit()
+
+    def set_authenticated(self, username: str):
+        """Set user as authenticated and transition to main view"""
+        self._state.auth.is_authenticated = True
+        self._state.auth.username = username
+        self._state.auth.current_screen = AuthScreen.AUTHENTICATED
+        self._state.current_user = username
+        self._state.current_view = ViewMode.MAIN
+        self.auth_changed.emit()
+        self.state_changed.emit()
+
+    def logout(self):
+        """Logout user and reset to auth screen"""
+        self._state.auth = AuthState()  # Reset auth state
+        self._state.current_view = ViewMode.AUTH
+        self._state.current_user = None
+        self._state.status_text = "Offline"
+        self.auth_changed.emit()
+        self.state_changed.emit()
+
+    def update_status_bar(self, status_text: str, active_downloads: int):
+        """Update status bar information"""
+        self._state.status_text = status_text
+        self._state.active_downloads = active_downloads
+        self.state_changed.emit()
 
     def _dto_to_row_state(self, dto: HighlightProjectDTO) -> HighlightRowState:
         """Convert DTO to row state"""

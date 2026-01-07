@@ -6,8 +6,16 @@ from enum import Enum
 
 class ViewMode(Enum):
     """Current view mode"""
+    AUTH = "auth"
     MAIN = "main"
     USER_DETAIL = "user_detail"
+
+
+class AuthScreen(Enum):
+    """Authentication screen states"""
+    SIGN_IN = "sign_in"
+    TWO_FACTOR = "two_factor"
+    AUTHENTICATED = "authenticated"
 
 
 class StatusType(Enum):
@@ -127,11 +135,48 @@ class ToastMessage:
 
 
 @dataclass
+class SignInState:
+    """State for sign-in screen"""
+    username: str = ""
+    password: str = ""
+    password_visible: bool = False
+    remember_device: bool = False
+    is_loading: bool = False
+    error_message: Optional[str] = None
+
+
+@dataclass
+class TwoFactorState:
+    """State for 2FA screen"""
+    code_digits: List[str] = field(default_factory=lambda: [""] * 6)
+    trust_device: bool = False
+    is_loading: bool = False
+    error_message: Optional[str] = None
+    username: str = ""
+    password: str = ""  # Store temporarily for 2FA verification
+
+
+@dataclass
+class AuthState:
+    """Overall authentication state"""
+    current_screen: AuthScreen = AuthScreen.SIGN_IN
+    is_authenticated: bool = False
+    username: Optional[str] = None
+    sign_in: SignInState = field(default_factory=SignInState)
+    two_factor: TwoFactorState = field(default_factory=TwoFactorState)
+
+
+@dataclass
 class AppUiState:
     """Complete application UI state"""
+    auth: AuthState = field(default_factory=AuthState)
     connection: ConnectionState = field(default_factory=ConnectionState)
     link_projects: List[HighlightRowState] = field(default_factory=list)
     users: List[UserRowState] = field(default_factory=list)
     user_detail: UserDetailState = field(default_factory=UserDetailState)
-    current_view: ViewMode = ViewMode.MAIN
+    current_view: ViewMode = ViewMode.AUTH
     toasts: List[ToastMessage] = field(default_factory=list)
+    current_user: Optional[str] = None
+    status_text: str = "Offline"
+    active_downloads: int = 0
+    app_version: str = "1.0.0"

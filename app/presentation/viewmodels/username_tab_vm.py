@@ -4,8 +4,7 @@ from qtpy.QtCore import QObject, Signal
 
 from ..store import AppStore
 from ...application.use_cases import AddUsernameUseCase
-from ...infrastructure.instagram_stub import InstagramGatewayStub
-from ...infrastructure.storage_local import FileStorageLocal
+from ...infrastructure.container import DependencyContainer
 
 
 class UsernameTabViewModel(QObject):
@@ -13,11 +12,12 @@ class UsernameTabViewModel(QObject):
 
     users_changed = Signal(list)  # List[UserRowState]
 
-    def __init__(self, store: AppStore):
+    def __init__(self, store: AppStore, container: DependencyContainer):
         super().__init__()
         self.store = store
-        self.instagram = InstagramGatewayStub()
-        self.storage = FileStorageLocal()
+        self.container = container
+        self.instagram = container.instagram_gateway
+        self.storage = container.file_storage
 
         # Listen to store
         self.store.state_changed.connect(self._on_state_changed)

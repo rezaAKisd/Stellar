@@ -11,9 +11,7 @@ from ...application.use_cases import (
     BuildVideoUseCase,
     OpenExportsFolderUseCase
 )
-from ...infrastructure.instagram_stub import InstagramGatewayStub
-from ...infrastructure.storage_local import FileStorageLocal
-from ...infrastructure.video_stub import VideoComposerStub
+from ...infrastructure.container import DependencyContainer
 
 
 class LinkTabViewModel(QObject):
@@ -21,12 +19,13 @@ class LinkTabViewModel(QObject):
 
     projects_changed = Signal(list)  # List[HighlightRowState]
 
-    def __init__(self, store: AppStore):
+    def __init__(self, store: AppStore, container: DependencyContainer):
         super().__init__()
         self.store = store
-        self.instagram = InstagramGatewayStub()
-        self.storage = FileStorageLocal()
-        self.video_composer = VideoComposerStub()
+        self.container = container
+        self.instagram = container.instagram_gateway
+        self.storage = container.file_storage
+        self.video_composer = container.video_composer
 
         # Listen to store
         self.store.state_changed.connect(self._on_state_changed)

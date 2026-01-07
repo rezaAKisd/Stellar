@@ -9,6 +9,46 @@ class IInstagramGateway(ABC):
     """Interface for Instagram data access"""
 
     @abstractmethod
+    async def login(
+        self,
+        username: str,
+        password: str,
+        verification_code: Optional[str] = None
+    ) -> tuple[bool, Optional[str], bool]:
+        """
+        Login to Instagram.
+
+        Args:
+            username: Instagram username
+            password: Instagram password
+            verification_code: Optional 2FA verification code
+
+        Returns:
+            Tuple of (success: bool, error_message: Optional[str], needs_2fa: bool)
+        """
+        pass
+
+    @abstractmethod
+    async def restore_session(self) -> tuple[bool, Optional[str]]:
+        """
+        Attempt to restore saved session.
+
+        Returns:
+            Tuple of (success: bool, error_message: Optional[str])
+        """
+        pass
+
+    @abstractmethod
+    async def logout(self) -> None:
+        """Logout and clear session"""
+        pass
+
+    @abstractmethod
+    def is_authenticated(self) -> bool:
+        """Check if currently authenticated"""
+        pass
+
+    @abstractmethod
     async def authenticate_with_session(self, token: SessionToken) -> bool:
         """Authenticate using session token"""
         pass

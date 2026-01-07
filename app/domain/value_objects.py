@@ -71,3 +71,33 @@ class SessionToken:
     def is_valid(self) -> bool:
         """Basic validation - can be enhanced"""
         return len(self.value) > 10
+
+
+@dataclass(frozen=True)
+class Password:
+    """Password value object with validation"""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or not isinstance(self.value, str):
+            raise ValueError("Password must be a non-empty string")
+        if len(self.value) < 6:
+            raise ValueError("Password must be at least 6 characters")
+
+    def __str__(self) -> str:
+        return "****"  # Don't expose password in string representation
+
+
+@dataclass(frozen=True)
+class TwoFactorCode:
+    """Two-factor authentication code value object"""
+    value: str
+
+    def __post_init__(self):
+        if not self.value or not isinstance(self.value, str):
+            raise ValueError("TwoFactorCode must be a non-empty string")
+        if not re.match(r'^\d{6}$', self.value):
+            raise ValueError("TwoFactorCode must be exactly 6 digits")
+
+    def __str__(self) -> str:
+        return self.value

@@ -66,3 +66,21 @@ class OperationResultDTO:
     success: bool
     message: str
     data: Optional[any] = None
+
+
+@dataclass
+class LoginResultDTO:
+    """DTO for login operation result"""
+    success: bool
+    needs_2fa: bool
+    error_message: Optional[str] = None
+    username: Optional[str] = None
+    session_token: Optional[str] = None
+
+
+@dataclass
+class AuthStatusDTO:
+    """DTO for authentication status"""
+    is_authenticated: bool
+    username: Optional[str] = None
+    session_valid: bool = False

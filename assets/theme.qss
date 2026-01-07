@@ -361,3 +361,291 @@ QLabel#instructions {
 #toast[type="info"] {
     background-color: #007aff;
 }
+
+/* ========== AUTHENTICATION SCREENS ========== */
+
+/* Auth card container */
+#auth-card {
+    background-color: #ffffff;
+    border: 1px solid #e5e5e7;
+    border-radius: 16px;
+    padding: 40px;
+}
+
+/* Auth logo */
+#auth-logo {
+    font-size: 64px;
+    color: #007aff;
+}
+
+/* Auth title */
+#auth-title {
+    font-size: 28px;
+    font-weight: 600;
+    color: #1d1d1f;
+}
+
+/* Auth instruction text */
+#auth-instruction {
+    font-size: 14px;
+    color: #86868b;
+    line-height: 1.5;
+}
+
+/* Auth input fields */
+QLineEdit#auth-input {
+    border: 1px solid #d1d1d6;
+    border-radius: 8px;
+    padding: 12px 16px;
+    background-color: white;
+    color: #1d1d1f;
+    font-size: 14px;
+    min-height: 20px;
+}
+
+QLineEdit#auth-input:focus {
+    border: 2px solid #007aff;
+    padding: 11px 15px;
+}
+
+/* Password toggle button */
+QPushButton#password-toggle {
+    background-color: transparent;
+    color: #007aff;
+    border: none;
+    padding: 8px 12px;
+    font-size: 16px;
+    min-width: 40px;
+}
+
+QPushButton#password-toggle:hover {
+    color: #0051d5;
+}
+
+/* Auth checkbox */
+QCheckBox#auth-checkbox {
+    color: #3a3a3c;
+    font-size: 13px;
+}
+
+QCheckBox#auth-checkbox::indicator {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1px solid #d1d1d6;
+    background-color: white;
+}
+
+QCheckBox#auth-checkbox::indicator:checked {
+    background-color: #007aff;
+    border-color: #007aff;
+}
+
+QCheckBox#auth-checkbox::indicator:checked:hover {
+    background-color: #0051d5;
+}
+
+/* Primary button (auth screens) */
+QPushButton#primary-button {
+    background-color: #007aff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    min-height: 20px;
+}
+
+QPushButton#primary-button:hover {
+    background-color: #0051d5;
+}
+
+QPushButton#primary-button:pressed {
+    background-color: #004fc4;
+}
+
+QPushButton#primary-button:disabled {
+    background-color: #c7c7cc;
+    color: #86868b;
+}
+
+/* Error message */
+QLabel#error-message {
+    color: #ff3b30;
+    font-size: 13px;
+    padding: 8px 12px;
+    background-color: #fff5f5;
+    border-radius: 6px;
+    border: 1px solid #ffcccc;
+}
+
+/* Text button (like back button) */
+QPushButton#text-button {
+    background-color: transparent;
+    color: #007aff;
+    border: none;
+    padding: 8px 12px;
+    font-size: 14px;
+    text-align: left;
+    min-width: 60px;
+}
+
+QPushButton#text-button:hover {
+    color: #0051d5;
+}
+
+/* ========== MAIN APP HEADER ========== */
+
+#app-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e5e5e7;
+}
+
+#header-logo {
+    font-size: 24px;
+    font-weight: 700;
+    color: #007aff;
+}
+
+#header-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1d1d1f;
+}
+
+/* Icon button (settings) */
+QPushButton#icon-button {
+    background-color: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    color: #3a3a3c;
+    font-size: 20px;
+    min-width: 40px;
+}
+
+QPushButton#icon-button:hover {
+    background-color: #f5f5f7;
+}
+
+/* Profile button */
+QPushButton#profile-button {
+    background-color: #007aff;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    min-width: 40px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+QPushButton#profile-button:hover {
+    background-color: #0051d5;
+}
+
+/* Profile menu */
+QMenu#profile-menu {
+    background-color: white;
+    border: 1px solid #e5e5e7;
+    border-radius: 8px;
+    padding: 8px 0;
+}
+
+QMenu#profile-menu::item {
+    padding: 10px 20px;
+    color: #1d1d1f;
+    font-size: 13px;
+    min-width: 150px;
+}
+
+QMenu#profile-menu::item:selected {
+    background-color: #f5f5f7;
+}
+
+QMenu#profile-menu::separator {
+    height: 1px;
+    background-color: #e5e5e7;
+    margin: 4px 0;
+}
+
+/* Danger menu item (sign out) */
+QMenu#profile-menu QAction#menu-danger {
+    color: #ff3b30;
+}
+
+/* ========== STATUS BAR ========== */
+
+#status-bar {
+    background-color: #ffffff;
+    border-top: 1px solid #e5e5e7;
+}
+
+#status-indicator {
+    font-size: 12px;
+    color: #86868b;
+}
+
+#status-text {
+    font-size: 12px;
+    color: #3a3a3c;
+}
+
+/* ========== UPDATED BUTTON STYLES ========== */
+
+/* Action buttons in table/list */
+QPushButton#action-cancel {
+    background-color: #ff3b30;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: 60px;
+}
+
+QPushButton#action-cancel:hover {
+    background-color: #e6221b;
+}
+
+QPushButton#action-create {
+    background-color: #007aff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: 80px;
+}
+
+QPushButton#action-create:hover {
+    background-color: #0051d5;
+}
+
+QPushButton#action-download {
+    background-color: #007aff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: 70px;
+}
+
+QPushButton#action-download:hover {
+    background-color: #0051d5;
+}
+
+QPushButton#action-show {
+    background-color: #007aff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: 70px;
+}
+
+QPushButton#action-show:hover {
+    background-color: #0051d5;
+}

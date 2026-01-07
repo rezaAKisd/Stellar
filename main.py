@@ -17,7 +17,7 @@ from qtpy.QtWidgets import QApplication
 from qtpy.QtCore import Qt
 import qasync
 
-from myhighlights.ui.main_window import MainWindow
+from app.presentation.views.main_window import MainWindow
 
 
 def setup_logging():
@@ -63,9 +63,13 @@ def main():
 
     logger.info("Configuring Qt application...")
 
-    # Enable high DPI support
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+    # Enable high DPI support (deprecated in Qt6, but keeping for Qt5 compatibility)
+    try:
+        QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+        QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+    except AttributeError:
+        # Qt6 doesn't need these attributes (enabled by default)
+        pass
 
     # Create Qt application
     app = QApplication(sys.argv)
