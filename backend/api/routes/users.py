@@ -4,7 +4,7 @@ import uuid
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 
-from ..schemas import (
+from api.schemas import (
     AddUserRequest,
     UserProfileResponse,
     UsersResponse,
@@ -13,14 +13,14 @@ from ..schemas import (
     TaskStartedResponse,
     MessageResponse
 )
-from ..dependencies import get_instagram_gateway, get_file_storage
-from ...core.security import get_current_user
-from ...app.application.use_cases import (
+from api.dependencies import get_instagram_gateway, get_file_storage
+from core.security import get_current_user
+from app.application.use_cases import (
     AddUsernameUseCase,
     LoadUserHighlightsUseCase,
     DownloadUserHighlightUseCase
 )
-from ...app.domain.entities import UserProfile, UserHighlight
+from app.domain.entities import UserProfile, UserHighlight
 
 logger = logging.getLogger(__name__)
 
@@ -198,10 +198,12 @@ async def _download_user_highlight_task(
     file_storage
 ):
     """Background task for downloading user highlight"""
-    from ..websockets.progress import broadcast_progress
+    from api.websockets.progress import broadcast_progress
+    import asyncio
 
     try:
         logger.info(f"Starting user highlight download task {task_id}")
+        loop = asyncio.get_running_loop()
 
         # Find highlight
         highlight_dto = None
@@ -209,7 +211,7 @@ async def _download_user_highlight_task(
             if profile.username == username:
                 for h in profile.highlights:
                     if h.highlight_id == highlight_id:
-                        from ...app.application.dtos import UserHighlightDTO
+                        from app.application.dtos import UserHighlightDTO
                         highlight_dto = UserHighlightDTO(
                             id=h.id,
                             name=h.name,
@@ -234,12 +236,17 @@ async def _download_user_highlight_task(
 
         def progress_callback(progress: float):
             """Send progress updates via WebSocket"""
-            import asyncio
-            asyncio.create_task(broadcast_progress(
-                user, highlight_id, "download_progress",
-                progress=progress,
-                status="downloading"
-            ))
+            loop.call_soon_threadsafe(
+                lambda: asyncio.create_task(
+                    broadcast_progress(
+                        user,
+                        highlight_id,
+                        "download_progress",
+                        progress=progress,
+                        status="downloading",
+                    )
+                )
+            )
 
         result = await download_uc.execute(username, highlight_dto, progress_callback)
 

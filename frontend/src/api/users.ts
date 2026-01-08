@@ -4,8 +4,8 @@ import {
   UserProfileResponse,
   UsersResponse,
   UserHighlightsResponse,
-  TaskStartedResponse,
 } from '../types/user';
+import { TaskStartedResponse } from '../types/highlight';
 import { MessageResponse } from '../types/auth';
 
 export const usersApi = {

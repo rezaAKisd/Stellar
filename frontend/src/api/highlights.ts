@@ -55,6 +55,24 @@ export const highlightsApi = {
   },
 
   /**
+   * Create ZIP bundle for a project
+   */
+  createZipBundle: async (projectId: string): Promise<TaskStartedResponse> => {
+    const response = await apiClient.post<TaskStartedResponse>(
+      `/highlights/${projectId}/create-zip`
+    );
+    return response.data;
+  },
+
+  /**
+   * Cancel an active task for a project
+   */
+  cancelTask: async (projectId: string): Promise<MessageResponse> => {
+    const response = await apiClient.post<MessageResponse>(`/highlights/${projectId}/cancel`);
+    return response.data;
+  },
+
+  /**
    * Delete a project
    */
   deleteProject: async (projectId: string): Promise<MessageResponse> => {

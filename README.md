@@ -109,7 +109,14 @@ CORS_ORIGINS=http://localhost:3000
 
 3. Run the backend server:
 ```bash
-uvicorn main:app --reload --port 8000
+# Option 1: Using the run script (recommended)
+python run.py
+
+# Option 2: Direct Python execution
+python main.py
+
+# Option 3: Using uvicorn with module path
+python -m uvicorn main:app --reload --port 8000
 ```
 
 Backend will run at **http://localhost:8000**
@@ -145,7 +152,7 @@ Frontend will open at **http://localhost:3000**
 npm install -g concurrently
 
 # From project root
-concurrently "cd backend && uvicorn main:app --reload" "cd frontend && npm start"
+concurrently "cd backend && python run.py" "cd frontend && npm start"
 ```
 
 ## 📡 API Endpoints

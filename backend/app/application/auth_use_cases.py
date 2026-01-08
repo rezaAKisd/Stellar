@@ -171,7 +171,8 @@ class RestoreSessionUseCase:
             success, username_or_error = await self.instagram.restore_session()
 
             if success:
-                username = username_or_error if username_or_error else "unknown"
+                # Gateway now guarantees a valid username from session directory
+                username = username_or_error
                 logger.info(f"Session restored successfully for user: {username}")
                 return LoginResultDTO(
                     success=True,

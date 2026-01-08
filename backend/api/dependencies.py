@@ -3,7 +3,9 @@ from pathlib import Path
 from functools import lru_cache
 from typing import Optional
 
-from ..core.config import settings
+from fastapi import Depends
+from core.config import settings
+from core.security import get_current_user
 
 
 # Global dependency container instance
@@ -21,7 +23,7 @@ def get_container() -> "DependencyContainer":
 
     if _container is None:
         # Import here to avoid circular dependencies
-        from ..app.infrastructure.container import DependencyContainer
+        from app.infrastructure.container import DependencyContainer
 
         _container = DependencyContainer(
             session_dir=settings.SESSION_DIR,
@@ -32,15 +34,35 @@ def get_container() -> "DependencyContainer":
 
 
 @lru_cache()
-def get_instagram_gateway():
-    """
-    Get the Instagram gateway instance.
+def get_state_db():
+    from app.infrastructure.state_db import StateDB
 
-    Returns:
-        IInstagramGateway instance
+    db_path = settings.DATA_DIR / "stellar.sqlite3"
+    db = StateDB(db_path)
+    db.init_schema()
+    return db
+
+
+def get_instagram_gateway(current_user: str = Depends(get_current_user)):
     """
-    container = get_container()
-    return container.instagram_gateway
+    Get an Instagram gateway bound to the authenticated user.
+
+    Note: per-user sessions are stored under `settings.SESSION_DIR/<username>/`.
+    """
+    from app.infrastructure.instagram_aiograpi import InstagramGatewayAiograpi
+    from app.domain.value_objects import Username
+
+    safe_username = str(Username(current_user))
+    return InstagramGatewayAiograpi(settings.SESSION_DIR / safe_username)
+
+
+def get_instagram_gateway_for_username(username: str):
+    """Get an Instagram gateway bound to an arbitrary username (used for login)."""
+    from app.infrastructure.instagram_aiograpi import InstagramGatewayAiograpi
+    from app.domain.value_objects import Username
+
+    safe_username = str(Username(username))
+    return InstagramGatewayAiograpi(settings.SESSION_DIR / safe_username)
 
 
 @lru_cache()

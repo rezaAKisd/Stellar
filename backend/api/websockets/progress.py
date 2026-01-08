@@ -3,8 +3,8 @@ import logging
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, status
 from fastapi.exceptions import WebSocketException
 
-from ...core.security import verify_token
-from .manager import manager
+from core.security import verify_token
+from api.websockets.manager import manager
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,9 @@ async def broadcast_progress(
     progress_type: str,
     progress: float = None,
     status: str = None,
-    message: str = None
+    message: str = None,
+    task_id: str = None,
+    task_type: str = None
 ):
     """
     Helper function to broadcast progress updates to a user's WebSocket connections.
@@ -109,6 +111,8 @@ async def broadcast_progress(
         progress: Progress value 0.0-1.0 (optional)
         status: Current status (optional)
         message: Error or info message (optional)
+        task_id: ID of the specific task (optional)
+        task_type: Type of task ("download", "build", "create_zip") (optional)
     """
     payload = {
         "type": progress_type,
@@ -120,6 +124,12 @@ async def broadcast_progress(
 
     if status is not None:
         payload["status"] = status
+
+    if task_id is not None:
+        payload["task_id"] = task_id
+
+    if task_type is not None:
+        payload["task_type"] = task_type
 
     if message is not None:
         payload["message"] = message

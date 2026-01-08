@@ -48,8 +48,8 @@ class DependencyContainer:
     def video_composer(self) -> IVideoComposer:
         """Get video composer instance (singleton)"""
         if self._video_composer is None:
-            from .video_stub import VideoComposerStub
-            self._video_composer = VideoComposerStub()
+            from .video_composer import VideoComposer
+            self._video_composer = VideoComposer()
         return self._video_composer
 
     def reset(self):

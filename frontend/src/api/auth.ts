@@ -5,6 +5,7 @@ import {
   Verify2FARequest,
   Verify2FAResponse,
   UserResponse,
+  RestoreSessionResponse,
   MessageResponse,
 } from '../types/auth';
 
@@ -44,8 +45,8 @@ export const authApi = {
   /**
    * Restore session from Instagram service
    */
-  restoreSession: async (): Promise<UserResponse> => {
-    const response = await apiClient.post<UserResponse>('/auth/restore-session');
+  restoreSession: async (): Promise<RestoreSessionResponse> => {
+    const response = await apiClient.post<RestoreSessionResponse>('/auth/restore-session');
     return response.data;
   },
 };

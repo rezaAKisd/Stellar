@@ -3,7 +3,7 @@ import logging
 from datetime import timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from ..schemas import (
+from api.schemas import (
     LoginRequest,
     LoginResponse,
     Verify2FARequest,
@@ -11,15 +11,14 @@ from ..schemas import (
     UserResponse,
     MessageResponse
 )
-from ..dependencies import get_instagram_gateway
-from ...core.security import create_access_token, get_current_user
-from ...core.config import settings
-from ...app.application.auth_use_cases import (
+from api.dependencies import get_instagram_gateway, get_instagram_gateway_for_username
+from core.security import create_access_token, get_current_user
+from core.config import settings
+from app.application.auth_use_cases import (
     LoginUseCase,
     Verify2FAUseCase,
     LogoutUseCase,
     RestoreSessionUseCase,
-    CheckAuthStatusUseCase
 )
 
 logger = logging.getLogger(__name__)
@@ -30,7 +29,6 @@ router = APIRouter()
 @router.post("/login", response_model=LoginResponse)
 async def login(
     request: LoginRequest,
-    instagram_gateway = Depends(get_instagram_gateway)
 ):
     """
     Login with Instagram credentials.
@@ -39,6 +37,8 @@ async def login(
     """
     try:
         logger.info(f"Login attempt for user: {request.username}")
+
+        instagram_gateway = get_instagram_gateway_for_username(request.username)
 
         # Execute login use case
         login_uc = LoginUseCase(instagram_gateway)
@@ -70,6 +70,11 @@ async def login(
 
         else:
             logger.warning(f"Login failed for user: {request.username}")
+            if result.error_message == "INSTAGRAM_FORBIDDEN":
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Instagram blocked API access for this session (403). Try again later, log out/in, or use a different network/proxy."
+                )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=result.error_message or "Invalid credentials"
@@ -88,7 +93,6 @@ async def login(
 @router.post("/verify-2fa", response_model=TokenResponse)
 async def verify_2fa(
     request: Verify2FARequest,
-    instagram_gateway = Depends(get_instagram_gateway)
 ):
     """
     Verify 2FA code and complete authentication.
@@ -97,6 +101,8 @@ async def verify_2fa(
     """
     try:
         logger.info(f"2FA verification attempt for user: {request.username}")
+
+        instagram_gateway = get_instagram_gateway_for_username(request.username)
 
         # Execute 2FA verification use case
         verify_uc = Verify2FAUseCase(instagram_gateway)
@@ -177,13 +183,12 @@ async def get_current_user_info(
     Requires authentication.
     """
     try:
-        # Check if user is still authenticated with Instagram
-        check_uc = CheckAuthStatusUseCase(instagram_gateway)
-        result = check_uc.execute()
+        # Validate the persisted Instagram session for this user.
+        success, _ = await instagram_gateway.restore_session()
 
         return UserResponse(
             username=current_user,
-            is_authenticated=result.is_authenticated
+            is_authenticated=success
         )
 
     except Exception as e:
@@ -194,9 +199,8 @@ async def get_current_user_info(
         )
 
 
-@router.post("/restore-session", response_model=UserResponse)
+@router.post("/restore-session", response_model=LoginResponse)
 async def restore_session(
-    instagram_gateway = Depends(get_instagram_gateway)
 ):
     """
     Attempt to restore a saved Instagram session.
@@ -206,26 +210,34 @@ async def restore_session(
     try:
         logger.info("Session restoration attempt")
 
-        # Execute restore session use case
-        restore_uc = RestoreSessionUseCase(instagram_gateway)
-        result = await restore_uc.execute()
+        # Try to restore any saved session under SESSION_DIR/<username>/
+        session_dir = settings.SESSION_DIR
+        if not session_dir.exists():
+            return LoginResponse(access_token="", token_type="bearer", username="", needs_2fa=False)
 
-        if result.success and result.username:
-            logger.info(f"Session restored for user: {result.username}")
-            return UserResponse(
-                username=result.username,
-                is_authenticated=True
-            )
-        else:
-            logger.info("No valid session to restore")
-            return UserResponse(
-                username="",
-                is_authenticated=False
-            )
+        for child in session_dir.iterdir():
+            if not child.is_dir():
+                continue
+            candidate_username = child.name
+            instagram_gateway = get_instagram_gateway_for_username(candidate_username)
+            restore_uc = RestoreSessionUseCase(instagram_gateway)
+            result = await restore_uc.execute()
+            if result.success and result.username:
+                access_token = create_access_token(
+                    data={"sub": result.username},
+                    expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
+                )
+                logger.info(f"Session restored for user: {result.username}")
+                return LoginResponse(
+                    access_token=access_token,
+                    token_type="bearer",
+                    username=result.username,
+                    needs_2fa=False,
+                )
+
+        logger.info("No valid session to restore")
+        return LoginResponse(access_token="", token_type="bearer", username="", needs_2fa=False)
 
     except Exception as e:
         logger.error(f"Session restoration error: {str(e)}", exc_info=True)
-        return UserResponse(
-            username="",
-            is_authenticated=False
-        )
+        return LoginResponse(access_token="", token_type="bearer", username="", needs_2fa=False)

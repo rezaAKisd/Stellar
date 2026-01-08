@@ -1,6 +1,10 @@
 import { ProgressMessage } from '../types/websocket';
 
-const WS_BASE_URL = process.env.REACT_APP_WS_URL || 'ws://localhost:8000';
+const DEFAULT_WS_BASE =
+  typeof window !== 'undefined' && window.location
+    ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}`
+    : 'ws://localhost:8000';
+const WS_BASE_URL = process.env.REACT_APP_WS_URL || DEFAULT_WS_BASE;
 
 export class WebSocketClient {
   private ws: WebSocket | null = null;

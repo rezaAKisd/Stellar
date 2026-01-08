@@ -70,6 +70,12 @@ class HighlightProjectResponse(BaseModel):
     error_message: Optional[str] = None
     has_downloads: bool
     has_exports: bool
+    video_urls: Optional[str] = None
+    photo_urls: Optional[str] = None
+    merged_video_url: Optional[str] = None
+    zip_bundle_url: Optional[str] = None
+    expires_at: Optional[str] = None
+    is_expired: int = 0
 
 
 class HighlightProjectsResponse(BaseModel):
@@ -80,7 +86,7 @@ class HighlightProjectsResponse(BaseModel):
 class TaskStartedResponse(BaseModel):
     """Task started response schema"""
     message: str
-    task_id: str
+    task_id: Optional[str] = None
 
 
 # ============================================================================

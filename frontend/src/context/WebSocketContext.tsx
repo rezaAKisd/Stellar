@@ -2,6 +2,7 @@ import React, { createContext, useEffect, useState, ReactNode, useRef, useCallba
 import { WebSocketClient } from '../api/websocket';
 import { ProgressMessage } from '../types/websocket';
 import { storage } from '../utils/storage';
+import { useAuthContext } from './AuthContext';
 
 interface WebSocketContextType {
   isConnected: boolean;
@@ -18,22 +19,41 @@ interface WebSocketProviderProps {
 export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const clientRef = useRef<WebSocketClient | null>(null);
+  const { isAuthenticated } = useAuthContext();
+
+  const ensureClient = useCallback((): WebSocketClient | null => {
+    const token = storage.getToken();
+    if (!token) {
+      return null;
+    }
+    if (!clientRef.current) {
+      clientRef.current = new WebSocketClient(token);
+    }
+    return clientRef.current;
+  }, []);
 
   useEffect(() => {
     const token = storage.getToken();
-    if (!token) {
+    if (!isAuthenticated || !token) {
+      if (clientRef.current) {
+        clientRef.current.disconnect();
+        clientRef.current = null;
+      }
+      setIsConnected(false);
       return;
     }
 
-    // Create WebSocket client
-    clientRef.current = new WebSocketClient(token);
+    // Ensure client exists (subscribe effects may run before this effect)
+    const client = ensureClient();
+    if (!client) {
+      setIsConnected(false);
+      return;
+    }
 
-    // Connect to WebSocket
-    clientRef.current
+    client
       .connect()
       .then(() => {
         setIsConnected(true);
-        console.log('WebSocket connected in context');
       })
       .catch((error) => {
         console.error('WebSocket connection error:', error);
@@ -56,23 +76,25 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       }
       setIsConnected(false);
     };
-  }, []);
+  }, [ensureClient, isAuthenticated]);
 
   const subscribe = useCallback(
     (projectId: string, callback: (message: ProgressMessage) => void): (() => void) => {
-      if (!clientRef.current) {
+      const client = ensureClient();
+      if (!client) {
         return () => {};
       }
-      return clientRef.current.subscribe(projectId, callback);
+      return client.subscribe(projectId, callback);
     },
-    []
+    [ensureClient]
   );
 
   const send = useCallback((data: string) => {
-    if (clientRef.current) {
-      clientRef.current.send(data);
+    const client = ensureClient();
+    if (client) {
+      client.send(data);
     }
-  }, []);
+  }, [ensureClient]);
 
   const value: WebSocketContextType = {
     isConnected,

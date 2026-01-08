@@ -28,6 +28,8 @@ export interface UserResponse {
   is_authenticated: boolean;
 }
 
+export type RestoreSessionResponse = LoginResponse;
+
 export interface MessageResponse {
   message: string;
 }

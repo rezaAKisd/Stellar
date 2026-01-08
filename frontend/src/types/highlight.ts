@@ -15,6 +15,14 @@ export interface HighlightProjectResponse {
   error_message: string | null;
   has_downloads: boolean;
   has_exports: boolean;
+  // v2 fields
+  video_urls?: string;  // JSON string array
+  photo_urls?: string;  // JSON string array
+  merged_video_url?: string | null;
+  zip_bundle_url?: string | null;
+  expires_at?: string | null;
+  is_expired?: number;  // 0 or 1
+  submission_date?: string | null;
 }
 
 export interface HighlightProjectsResponse {
@@ -23,7 +31,7 @@ export interface HighlightProjectsResponse {
 
 export interface TaskStartedResponse {
   message: string;
-  task_id: string;
+  task_id?: string | null;
 }
 
 export type DownloadStatus = 'pending' | 'downloading' | 'downloaded' | 'failed';

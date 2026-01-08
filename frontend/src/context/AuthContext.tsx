@@ -104,22 +104,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const restoreSession = async (): Promise<boolean> => {
     try {
       const response = await authApi.restoreSession();
-      if (response.is_authenticated) {
-        // Session restored, generate new token
-        const loginResponse = await authApi.login({
-          username: response.username,
-          password: '', // Empty password for session restoration
-        });
-
-        if (!loginResponse.needs_2fa) {
-          storage.setToken(loginResponse.access_token);
-          storage.setUsername(loginResponse.username);
-          setUser(loginResponse.username);
-          setIsAuthenticated(true);
-          return true;
-        }
+      if (!response.access_token || !response.username) {
+        return false;
       }
-      return false;
+
+      storage.setToken(response.access_token);
+      storage.setUsername(response.username);
+      setUser(response.username);
+      setIsAuthenticated(true);
+      return true;
     } catch (error) {
       console.error('Session restoration error:', error);
       return false;
